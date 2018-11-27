@@ -1,4 +1,4 @@
-package com.grpc.file_transfer_app;
+package com.grpc.raft;
 
 import junit.framework.Test;
 import junit.framework.TestCase;

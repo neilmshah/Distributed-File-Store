@@ -1,4 +1,4 @@
-package com.grpc.file_transfer_app;
+package com.grpc.raft;
 
 /**
  * Server participating in RAFT
