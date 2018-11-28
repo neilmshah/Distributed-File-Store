@@ -1,0 +1,21 @@
+/target/
+.settings
+.project
+.metadata
+bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.settings/
+.loadpath
+.recommenders
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+

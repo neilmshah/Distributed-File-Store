@@ -1,0 +1,13 @@
+{
+  "raftNodes": [
+    {"host": "localhost", "port":8700},
+    {"host": "localhost", "port":8701},
+    {"host": "localhost", "port":8702}
+  ],
+  "proxyNodes": [
+  	{"host": "localhost", "port":3000},
+    {"host": "localhost", "port":3000},
+    {"host": "localhost", "port":3000}
+  ]
+
+}

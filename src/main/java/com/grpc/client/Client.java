@@ -1,10 +1,21 @@
 package com.grpc.client;
 
+import com.util.ConfigUtil;
+
 public class Client {
-
+	
+	
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
+		
+		loadConfig();
+		
 
+	}
+
+	private static void loadConfig() {
+		ConfigUtil c = new ConfigUtil();
+
+		
 	}
 
 }
