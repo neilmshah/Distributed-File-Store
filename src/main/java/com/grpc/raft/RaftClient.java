@@ -1,6 +1,6 @@
 package com.grpc.raft;
 
-public class ServerRPC {
+public class RaftClient {
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub

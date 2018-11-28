@@ -3,7 +3,7 @@ package com.grpc.raft;
 /**
  * Server participating in RAFT
  */
-public class Server 
+public class RaftServer 
 {
     public static void main( String[] args )
     {

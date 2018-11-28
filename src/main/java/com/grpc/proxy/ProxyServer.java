@@ -1,5 +1,5 @@
 package com.grpc.proxy;
 
-public class Proxy {
+public class ProxyServer {
 
 }
