@@ -12,6 +12,7 @@ public class DataTransferServiceImpl extends DataTransferServiceGrpc.DataTransfe
 	public void  RequestFileUpload(FileTransfer.FileUploadInfo request, StreamObserver<FileTransfer.ProxyList> responseObserver) {
 		
 		List<FileTransfer.ProxyInfo> activeProxies = new ArrayList<FileTransfer.ProxyInfo>();
+		//TODO Heartbeat between 
 		FileTransfer.ProxyList response = FileTransfer.ProxyList.newBuilder()
 				.addAllLstProxy(activeProxies)
 				.build();
@@ -19,4 +20,7 @@ public class DataTransferServiceImpl extends DataTransferServiceGrpc.DataTransfe
 		responseObserver.onCompleted();
 		
 	}
+	
+	
+	
 }
