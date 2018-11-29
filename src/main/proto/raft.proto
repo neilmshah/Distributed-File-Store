@@ -16,16 +16,22 @@ message Response{
 
 //Doubles as a heartbeat. Has empty map if so
 message EntryAppend{
-    repeated Entry map = 1;
+    Entry entry = 1;
     int64 term = 2;
     int64 leader = 3;
     int64 appendedEntries = 4;
+    int64 myindex = 5;
+}
+
+message EntryFix{
+    repeated Entry map = 1;
 }
 
 message VoteRequest{
     int64 term = 1;
     int64 leader = 2;
     int64 appendedEntries = 3;
+    int64 myindex = 4;
 }
 
 service RaftService{
@@ -33,7 +39,12 @@ service RaftService{
     //accept = true if sent term >= stored term, false otherwise
     //requireUpdate = true iff stored term < sent term
     //Leader sends copy of map in map if it recieved a requireUpdate=false from previous AppendEntries
+    //true, true = I'm behind in term, send me an update. true, false = A-OK
+    //false, true = I'm behind in logs, send me an update. false, false = you're behind in term
     rpc AppendEntries(EntryAppend) returns (Response);
+
+    //Sent by leader to followers who respond with requireUpdate = true
+    rpc FixEntries(EntryFix) returns (Response);
 
     //Vote yes if no candidate yet and candidate has >= term and >= appendedEntries
     //Vote no otherwise
