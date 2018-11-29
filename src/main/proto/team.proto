@@ -7,6 +7,7 @@ message Ack{
     bool isAck = 2;
 }
 
+
 message chunkLocations {
     int64 messageId =1;
     string fileName = 2;
@@ -15,18 +16,25 @@ message chunkLocations {
     bool done = 5;
 }
 
+message fileData {
+    int64 messageId =1;
+    string filename = 2;
+    int64 chunkId = 3;
+}
+
 
 service TeamClusterService {
-// raft to detect if proxy servers are alive
-    rpc Heartbeat (Ack) returns (Ack);
 
+    // raft to detect if proxy servers are alive
+    rpc Heartbeat (Ack) returns (Ack);
 
     
     //	Note: Since RequestFileUpload just returns ProxyList to client, proxy takes the responsibility to update chunk locations on RAFT
-  
-
     // Update RAFT about chunk locations and whether upload to Db has been successful
 
     rpc UpdateChunkLocations (chunkLocations) returns (Ack);
+
+    // Proxy sends to RAFT
+    rpc getChunkLocations (fileData) returns (chunkLocations);
 
 }

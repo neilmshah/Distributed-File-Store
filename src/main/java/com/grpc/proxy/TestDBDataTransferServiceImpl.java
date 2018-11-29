@@ -1,10 +1,15 @@
 package com.grpc.proxy;
 
+import static io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall;
+
+import java.util.ArrayList;
+
 import org.apache.log4j.Logger;
 
 import grpc.DataTransferServiceGrpc;
 import grpc.FileTransfer;
 import grpc.FileTransfer.FileInfo;
+import grpc.FileTransfer.FileMetaData;
 import grpc.FileTransfer.FileUploadData;
 import io.grpc.stub.StreamObserver;
 
@@ -45,9 +50,15 @@ public class TestDBDataTransferServiceImpl extends DataTransferServiceGrpc.DataT
 				responseObserver.onCompleted();
 			}
 
-
-
 		};
 	}
+	
+	
+	@Override
+	public void downloadChunk(grpc.FileTransfer.ChunkInfo request,
+	        io.grpc.stub.StreamObserver<grpc.FileTransfer.FileMetaData> responseObserver) {
+		ArrayList<FileMetaData> li = new ArrayList<FileMetaData>();
+			
+	   }
 
 }

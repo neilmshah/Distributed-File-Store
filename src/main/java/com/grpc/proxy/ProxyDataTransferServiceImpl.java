@@ -1,10 +1,16 @@
 package com.grpc.proxy;
 
+import static io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall;
+
+import java.sql.Timestamp;
+import java.util.Iterator;
+
 import org.apache.log4j.Logger;
 
 import grpc.DataTransferServiceGrpc;
 import grpc.FileTransfer;
 import grpc.FileTransfer.FileInfo;
+import grpc.FileTransfer.FileMetaData;
 import grpc.FileTransfer.FileUploadData;
 import io.grpc.stub.StreamObserver;
 
@@ -15,7 +21,8 @@ import io.grpc.stub.StreamObserver;
  */
 public class ProxyDataTransferServiceImpl extends DataTransferServiceGrpc.DataTransferServiceImplBase {
 
-	DBClient dbservice = new DBClient();
+	ProxyClient dbClient = new ProxyClient();
+
 	final static Logger logger = Logger.getLogger(ProxyDataTransferServiceImpl.class);
 	
 	/**
@@ -31,7 +38,7 @@ public class ProxyDataTransferServiceImpl extends DataTransferServiceGrpc.DataTr
 			@Override
 			public void onNext(FileUploadData value) {
 				fileName = value.getFileName();
-				dbservice.uploadDataToDB(value);
+				dbClient.uploadDataToDB(value);
 			}
 
 			@Override
@@ -52,4 +59,25 @@ public class ProxyDataTransferServiceImpl extends DataTransferServiceGrpc.DataTr
 
 		};
 	}
+
+	/**
+	 * Server-Side: Download chunks from Client to Proxy
+	 * 
+	 */
+	@Override
+	public void downloadChunk(grpc.FileTransfer.ChunkInfo request,
+	        io.grpc.stub.StreamObserver<grpc.FileTransfer.FileMetaData> responseObserver) {
+		Timestamp ts1  =  new Timestamp(System.currentTimeMillis());
+		
+		Iterator <FileMetaData> fileMetaDataList = dbClient.downloadChunk(request);
+		
+		while(fileMetaDataList.hasNext()) {
+			responseObserver.onNext(fileMetaDataList.next());
+		}
+		 responseObserver.onCompleted();
+			Timestamp ts2  =  new Timestamp(System.currentTimeMillis());
+			logger.debug("Method requestFileInfo ended at "+ ts2);
+			logger.debug("Method downloadChunk ended at "+ ts2);
+			logger.debug("Method downloadChunk execution time : "+ (ts2.getTime() - ts1.getTime()) + "ms");
+	    }
 }
