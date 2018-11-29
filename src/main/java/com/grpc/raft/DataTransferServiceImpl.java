@@ -18,11 +18,12 @@ import io.grpc.stub.StreamObserver;
 public class DataTransferServiceImpl extends DataTransferServiceGrpc.DataTransferServiceImplBase{
 
 
-	private ConcurrentHashMap data;
+	private RaftServer server;
 	private HeartbeatService heartbeat;
 
-	public DataTransferServiceImpl(ConcurrentHashMap map){
-		data = map;
+	public DataTransferServiceImpl(RaftServer serv){
+		super();
+		server = serv;
 	}
 
 	/**
