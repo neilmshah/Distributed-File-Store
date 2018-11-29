@@ -9,18 +9,13 @@ import grpc.FileTransfer.FileUploadData;
 import io.grpc.stub.StreamObserver;
 
 /**
- * Proxy Server Implmentation
+ * Test Proxy DB class
  * @author Sricheta's computer
  *
  */
-public class ProxyDataTransferServiceImpl extends DataTransferServiceGrpc.DataTransferServiceImplBase {
+public class TestDBDataTransferServiceImpl extends DataTransferServiceGrpc.DataTransferServiceImplBase{
 
-	ProxyDBNodeService dbservice = new ProxyDBNodeService();
-	final static Logger logger = Logger.getLogger(ProxyDataTransferServiceImpl.class);
-	
-	/**
-	 * This method calls the db node to upload File chunk
-	 */
+	final static Logger logger = Logger.getLogger(TestDBDataTransferServiceImpl.class);
 	@Override
 	public StreamObserver<FileTransfer.FileUploadData> uploadFile(StreamObserver<FileTransfer.FileInfo> responseObserver) {
 
@@ -31,11 +26,13 @@ public class ProxyDataTransferServiceImpl extends DataTransferServiceGrpc.DataTr
 			@Override
 			public void onNext(FileUploadData value) {
 				fileName = value.getFileName();
-				dbservice.uploadDataToDB(value);
+				System.out.println(value+"fffd");
 			}
 
 			@Override
 			public void onError(Throwable t) {
+				t.printStackTrace();
+				
 				logger.error("Error occured in uploadFile" + t.getMessage());
 				responseObserver.onError(t);
 			}
@@ -52,4 +49,5 @@ public class ProxyDataTransferServiceImpl extends DataTransferServiceGrpc.DataTr
 
 		};
 	}
+
 }
