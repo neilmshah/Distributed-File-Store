@@ -14,9 +14,9 @@ import io.grpc.stub.StreamObserver;
  * @author Sricheta's computer
  *
  */
-public class ProxyDBNodeService {
+public class DBClient {
 
-	final static Logger logger = Logger.getLogger(ProxyDBNodeService.class);
+	final static Logger logger = Logger.getLogger(DBClient.class);
 	
 	/**
 	 * This method calls the db node to upload File chunk

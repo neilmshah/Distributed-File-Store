@@ -15,7 +15,7 @@ import io.grpc.stub.StreamObserver;
  */
 public class ProxyDataTransferServiceImpl extends DataTransferServiceGrpc.DataTransferServiceImplBase {
 
-	ProxyDBNodeService dbservice = new ProxyDBNodeService();
+	DBClient dbservice = new DBClient();
 	final static Logger logger = Logger.getLogger(ProxyDataTransferServiceImpl.class);
 	
 	/**

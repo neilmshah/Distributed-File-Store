@@ -14,7 +14,7 @@ public class TestDBServer {
 
 	public static void main( String[] args )
 	{
-		logger.info( "Hello DB!" );
+		logger.info( "Hello DB!" ); 
 		Server server = ServerBuilder.forPort(9000)
 				.addService(new TestDBDataTransferServiceImpl())
 				.build();
