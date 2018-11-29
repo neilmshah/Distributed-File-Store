@@ -3,12 +3,12 @@ syntax = "proto3";
 package grpc;
 
 message Ack{
-	int64 messageId =1;
+int64 messageId =1;
     bool isAck = 2;
 }
 
 message chunkLocations {
-	int64 messageId =1;
+int64 messageId =1;
     string fileName = 2;
     int64 chunkId = 3;
     repeated String DbAddresses = 4;
@@ -17,15 +17,16 @@ message chunkLocations {
 
 
 service TeamClusterService {
-	// raft to detect if proxy servers are alive
+// raft to detect if proxy servers are alive
     rpc Heartbeat (Ack) returns (Ack);
 
 
     
-    //	Note: Since RequestFileUpload just returns ProxyList to client, proxy akes the responsibility to update chunk locations on RAFT
+    //	Note: Since RequestFileUpload just returns ProxyList to client, proxy takes the responsibility to update chunk locations on RAFT
   
 
     // Update RAFT about chunk locations upload to Db has been successful
+
     rpc UpdateChunkLocations (chunkLocations) returns (Ack)
 
 }
