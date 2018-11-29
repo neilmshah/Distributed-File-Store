@@ -27,6 +27,6 @@ service TeamClusterService {
 
     // Update RAFT about chunk locations and whether upload to Db has been successful
 
-    rpc UpdateChunkLocations (chunkLocations) returns (Ack)
+    rpc UpdateChunkLocations (chunkLocations) returns (Ack);
 
 }
