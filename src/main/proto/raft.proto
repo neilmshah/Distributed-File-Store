@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package grpc;
+
+message Entry{
+    string key = 1;
+    string value = 2;
+}
+
+//Response to many types of messages.
+    //EntryAppend: False if sent leader is > stored leader
+message Response{
+    bool accept = 1;
+    bool requireUpdate = 2;
+}
+
+//Doubles as a heartbeat. Has empty map if so
+message EntryAppend{
+    repeated Entry map = 1;
+    int64 term = 2;
+    int64 leader = 3;
+}
+
+message VoteRequest{
+    int64 term = 1;
+    int64 leader = 2;
+}
+
+service RaftService{
+    //Heartbeat, also contains any changed entries.
+    //accept = true if sent term >= stored term, false otherwise
+    //requireUpdate = true iff stored term < sent term
+    //Leader sends copy of map in map if it recieved a requireUpdate=false from previous AppendEntries
+    rpc AppendEntries(EntryAppend) returns (Response);
+
+    //rpc ChangedEntry(Entry) returns (Response);
+    //rpc AcceptedChangedEntry(Entry) returns (Response);
+
+    rpc RequestVote(VoteRequest) returns (Response);
+}

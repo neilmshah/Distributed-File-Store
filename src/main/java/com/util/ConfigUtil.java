@@ -15,7 +15,6 @@ public class ConfigUtil {
 	public static List<Connection> proxyNodes = new ArrayList<Connection>();
 	public static List<Connection> databaseNodes = new ArrayList<Connection>();
 	
-	
 	public ConfigUtil(){
 		Scanner scan = null;
 		try {
