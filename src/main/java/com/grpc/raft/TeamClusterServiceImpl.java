@@ -34,6 +34,7 @@ public class TeamClusterServiceImpl extends TeamClusterServiceGrpc.TeamClusterSe
 	 */
 	public void UpdateChunkLocations(Team.ChunkLocations request, StreamObserver<Team.Ack> responseObserver) {
 
+		logger.debug("UpdateChunkLocations started.. ");
 		String key = request.getFileName()+"_"+ request.getChunkId();
 		String value = server.data.get(key);
 		
@@ -71,7 +72,7 @@ public class TeamClusterServiceImpl extends TeamClusterServiceGrpc.TeamClusterSe
 		// Use responseObserver to send a single response back
 		responseObserver.onNext(response);
 
-		// When you are done, you must call onCompleted.
+		logger.debug("UpdateChunkLocations ended.. ");
 		responseObserver.onCompleted();
 
 	}
