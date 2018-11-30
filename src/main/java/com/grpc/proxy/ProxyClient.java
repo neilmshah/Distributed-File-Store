@@ -1,7 +1,5 @@
 package com.grpc.proxy;
 
-import static io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall;
-
 import java.util.Iterator;
 
 import org.apache.log4j.Level;
@@ -9,13 +7,13 @@ import org.apache.log4j.Logger;
 
 import grpc.DataTransferServiceGrpc;
 import grpc.FileTransfer;
+import grpc.FileTransfer.ChunkInfo;
+import grpc.FileTransfer.FileMetaData;
 import grpc.FileTransfer.FileUploadData;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
-import grpc.FileTransfer.ChunkInfo;
-import grpc.FileTransfer.FileMetaData;
 
 /**
  * This class acts a Client to DB Server
