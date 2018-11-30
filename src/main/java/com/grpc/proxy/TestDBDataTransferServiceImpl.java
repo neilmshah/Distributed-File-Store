@@ -6,8 +6,11 @@ import java.util.ArrayList;
 
 import org.apache.log4j.Logger;
 
+import com.google.protobuf.ByteString;
+
 import grpc.DataTransferServiceGrpc;
 import grpc.FileTransfer;
+import grpc.FileTransfer.ChunkInfo;
 import grpc.FileTransfer.FileInfo;
 import grpc.FileTransfer.FileMetaData;
 import grpc.FileTransfer.FileUploadData;
@@ -57,8 +60,15 @@ public class TestDBDataTransferServiceImpl extends DataTransferServiceGrpc.DataT
 	@Override
 	public void downloadChunk(grpc.FileTransfer.ChunkInfo request,
 	        io.grpc.stub.StreamObserver<grpc.FileTransfer.FileMetaData> responseObserver) {
-		ArrayList<FileMetaData> li = new ArrayList<FileMetaData>();
-			
+		FileMetaData fmd =  FileMetaData.newBuilder().setChunkId(1).setFileName("Test")
+				.setSeqNum(request.getStartSeqNum()).setSeqMax(3).setData(ByteString.copyFromUtf8("Hello World!!")).build();
+		FileMetaData fmd1 =  FileMetaData.newBuilder().setChunkId(1).setFileName("Test")
+				.setSeqNum(1).setSeqMax(3).setData(ByteString.copyFromUtf8("Outdoor Testing")).build();
+		FileMetaData fmd2 =  FileMetaData.newBuilder().setChunkId(1).setFileName("Test")
+				.setSeqNum(2).setSeqMax(3).setData(ByteString.copyFromUtf8("MacBook Air")).build();
+		responseObserver.onNext(fmd);
+		responseObserver.onNext(fmd1);
+		responseObserver.onNext(fmd2);
+		responseObserver.onCompleted();
 	   }
-
 }

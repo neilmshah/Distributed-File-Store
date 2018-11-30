@@ -13,12 +13,12 @@ message ChunkLocations {
     string fileName = 2;
     int64 chunkId = 3;
     repeated string dbAddresses = 4;
-    bool done = 5;
+    int64 maxChunks = 5;
 }
 
 message FileData {
     int64 messageId =1;
-    string filename = 2;
+    string fileName = 2;
     int64 chunkId = 3;
 }
 
@@ -29,12 +29,12 @@ service TeamClusterService {
     rpc Heartbeat (Ack) returns (Ack);
 
     
-    //	Note: Since RequestFileUpload just returns ProxyList to client, proxy takes the responsibility to update chunk locations on RAFT
+    //  Note: Since RequestFileUpload just returns ProxyList to client, proxy takes the responsibility to update chunk locations on RAFT
     // Update RAFT about chunk locations and whether upload to Db has been successful
 
     rpc UpdateChunkLocations (ChunkLocations) returns (Ack);
 
     // Proxy sends to RAFT
-    rpc getChunkLocations (FileData) returns (ChunkLocations);
+    rpc GetChunkLocations (FileData) returns (ChunkLocations);
 
 }

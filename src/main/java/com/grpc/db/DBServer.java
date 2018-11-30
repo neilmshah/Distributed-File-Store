@@ -1,6 +1,7 @@
-package com.grpc.proxy;
+package com.grpc.db;
 
 import java.io.IOException;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.log4j.Logger;
 
@@ -9,16 +10,23 @@ import com.util.ConfigUtil;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 
-public class ProxyServer {
+/**
+ * DB server 
+ * @author Sricheta's computer
+ *
+ */
+public class DBServer {
 	
-	final static Logger logger = Logger.getLogger(ProxyServer.class);
+	final static Logger logger = Logger.getLogger(DBServer.class);
 	
 	 public static void main( String[] args )
 	    {
-		   logger.info( "Hello Proxy!" );
+		 
+		   ConcurrentHashMap map= null;
+		   logger.info( "Hello DB!" );
 		   new ConfigUtil();
-	        Server server = ServerBuilder.forPort(3000)
-	          .addService(new ProxyDataTransferServiceImpl())
+	        Server server = ServerBuilder.forPort(9000)
+	          .addService(new DBTransferServiceImpl(map))
 	          .build();
 
 
@@ -29,7 +37,7 @@ public class ProxyServer {
 				e.printStackTrace();
 			}
 
-	        System.out.println("Proxy Server started");
+	        System.out.println("DB Server started");
 	        
 	        try {
 				server.awaitTermination();
@@ -38,5 +46,4 @@ public class ProxyServer {
 				e.printStackTrace();
 			}
 	    }
-
 }
