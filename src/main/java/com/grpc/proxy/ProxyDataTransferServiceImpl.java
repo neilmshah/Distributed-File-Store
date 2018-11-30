@@ -4,6 +4,7 @@ import static io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall;
 
 import java.sql.Timestamp;
 import java.util.Iterator;
+import java.util.List;
 
 import org.apache.log4j.Logger;
 
@@ -12,6 +13,7 @@ import grpc.FileTransfer;
 import grpc.FileTransfer.FileInfo;
 import grpc.FileTransfer.FileMetaData;
 import grpc.FileTransfer.FileUploadData;
+import grpc.Team.ChunkLocations;
 import io.grpc.stub.StreamObserver;
 
 /**
@@ -21,12 +23,15 @@ import io.grpc.stub.StreamObserver;
  */
 public class ProxyDataTransferServiceImpl extends DataTransferServiceGrpc.DataTransferServiceImplBase {
 
-	ProxyClient dbClient = new ProxyClient();
+	ProxyClient proxyClient = new ProxyClient();
 
 	final static Logger logger = Logger.getLogger(ProxyDataTransferServiceImpl.class);
 	
 	/**
+	 * Upload chunks from Client to Proxy
 	 * This method calls the db node to upload File chunk
+	 * 
+	 * rpc UploadFile (stream FileUploadData) returns (FileInfo); 
 	 */
 	@Override
 	public StreamObserver<FileTransfer.FileUploadData> uploadFile(StreamObserver<FileTransfer.FileInfo> responseObserver) {
@@ -38,7 +43,7 @@ public class ProxyDataTransferServiceImpl extends DataTransferServiceGrpc.DataTr
 			@Override
 			public void onNext(FileUploadData value) {
 				fileName = value.getFileName();
-				dbClient.uploadDataToDB(value);
+				proxyClient.uploadDataToDB(value);
 			}
 
 			@Override
@@ -55,13 +60,13 @@ public class ProxyDataTransferServiceImpl extends DataTransferServiceGrpc.DataTr
 				responseObserver.onCompleted();
 			}
 
-
-
 		};
 	}
 
 	/**
-	 * Server-Side: Download chunks from Client to Proxy
+	 *  Download chunks from Client to Proxy
+	 *  
+	 * 	rpc DownloadChunk (ChunkInfo) returns (stream FileMetaData);
 	 * 
 	 */
 	@Override
@@ -69,7 +74,9 @@ public class ProxyDataTransferServiceImpl extends DataTransferServiceGrpc.DataTr
 	        io.grpc.stub.StreamObserver<grpc.FileTransfer.FileMetaData> responseObserver) {
 		Timestamp ts1  =  new Timestamp(System.currentTimeMillis());
 		
-		Iterator <FileMetaData> fileMetaDataList = dbClient.downloadChunk(request);
+		ChunkLocations ch = proxyClient.GetChunkLocations(request);
+			
+		Iterator <FileMetaData> fileMetaDataList = proxyClient.downloadChunk(request, ch.getDbAddressesList());
 		
 		while(fileMetaDataList.hasNext()) {
 			responseObserver.onNext(fileMetaDataList.next());

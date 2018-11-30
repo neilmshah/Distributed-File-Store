@@ -35,6 +35,6 @@ service TeamClusterService {
     rpc UpdateChunkLocations (ChunkLocations) returns (Ack);
 
     // Proxy sends to RAFT
-    rpc getChunkLocations (FileData) returns (ChunkLocations);
+    rpc GetChunkLocations (FileData) returns (ChunkLocations);
 
 }
