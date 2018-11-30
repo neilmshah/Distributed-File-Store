@@ -41,7 +41,8 @@ public class TestProxyClient {
 			  logger.log(Level.WARN, "RPC failed: {0}");
 			}
 		
-		System.out.println("FileMetaDataList: " + fileMetaDataList);
+		System.out.println("FileMetaDataList: " + fileMetaDataList );
+//		+ "," + fileMetaDataList.next() + "," + fileMetaDataList.next());
 		channel.shutdown();
 		
 		

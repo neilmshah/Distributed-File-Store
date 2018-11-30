@@ -30,11 +30,11 @@ service TeamClusterService {
 
     
     //	Note: Since RequestFileUpload just returns ProxyList to client, proxy takes the responsibility to update chunk locations on RAFT
-    // Update RAFT about chunk locations and whether upload to Db has been successful
+    // Proxy Updates RAFT about chunk locations after Upload and whether upload to Db has been successful
 
     rpc UpdateChunkLocations (chunkLocations) returns (Ack);
 
-    // Proxy sends to RAFT
+    // Proxy sends to RAFT before download
     rpc getChunkLocations (fileData) returns (chunkLocations);
 
 }
