@@ -105,9 +105,6 @@ public class RaftServer {
 			e.printStackTrace();
 		}
 
-		//Begin timeout
-
-
         System.out.println("Raft Server started");
         
         try {
@@ -224,9 +221,9 @@ public class RaftServer {
 				public void onSuccess(@Nullable Raft.Response response) {
 					if(response.getRequireUpdate()){
 						//Send message with hashmap
-						//Raft.EntryFix entries = Raft.EntryFix.newBuilder()
-						//		.addAllMap()
-						//		.build();
+						Raft.EntryFix entries = Raft.EntryFix.newBuilder()
+								.addAllMap()
+								.build();
 					}
 					else if(!response.getRequireUpdate()){
 						//Do nothing, either everything is fine, or this leader is being ignored
