@@ -96,6 +96,7 @@ public class RaftServer {
         Server server = ServerBuilder.forPort(8080)
           .addService(new DataTransferServiceImpl(myRaftServer))
           .addService(new RaftServiceImpl(myRaftServer))
+          .addService(new TeamClusterServiceImpl(myRaftServer))
           .build();
 
         try {

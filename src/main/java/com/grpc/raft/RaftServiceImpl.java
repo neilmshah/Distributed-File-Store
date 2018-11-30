@@ -118,7 +118,7 @@ public class RaftServiceImpl extends RaftServiceGrpc.RaftServiceImplBase{
 			server.term = request.getTerm();
 			server.raftState = 0;
 			hasVoted = true;
-			voteIndex = request.getLeader();
+		//	voteIndex = request.getLeader();
 		}
 		//Candidate has lower term, vote no
 		else if(request.getTerm() < server.term){

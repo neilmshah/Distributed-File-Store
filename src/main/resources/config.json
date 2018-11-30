@@ -14,10 +14,10 @@
   ],
 
   "databaseNodes": [
-    {"host": "localhost", "port": 6500},
-    {"host": "localhost", "port": 6501},
-    {"host": "localhost", "port": 6502},
-    {"host": "localhost", "port": 6503}
+    {"host": "localhost", "port": 9000},
+    {"host": "localhost", "port": 9000},
+    {"host": "localhost", "port": 9000},
+    {"host": "localhost", "port": 9000}
   ],
   
   "globalNodes" : [

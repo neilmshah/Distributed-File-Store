@@ -35,13 +35,15 @@ public class TestProxyClient {
 		ChunkInfo request = ChunkInfo.newBuilder().setChunkId(1).setFileName("Test").setStartSeqNum(0).build();
 		DataTransferServiceGrpc.DataTransferServiceBlockingStub blockingStub = DataTransferServiceGrpc.newBlockingStub(channel);	
 		Iterator<FileMetaData> fileMetaDataList = null;
+		System.out.println("fhghj: " + fileMetaDataList.getClass().getName() );
 		try {
 			fileMetaDataList = blockingStub.downloadChunk(request);
 			} catch (StatusRuntimeException ex) {
 			  logger.log(Level.WARN, "RPC failed: {0}");
 			}
 		
-		System.out.println("FileMetaDataList: " + fileMetaDataList);
+		System.out.println("FileMetaDataList: " + fileMetaDataList.getClass().getName() );
+//		+ "," + fileMetaDataList.next() + "," + fileMetaDataList.next());
 		channel.shutdown();
 		
 		
