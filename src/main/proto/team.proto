@@ -18,7 +18,7 @@ message ChunkLocations {
 
 message FileData {
     int64 messageId =1;
-    string filename = 2;
+    string fileName = 2;
     int64 chunkId = 3;
 }
 

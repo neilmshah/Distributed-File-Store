@@ -127,7 +127,7 @@ public class ProxyClient {
 				.build();
 		TeamClusterServiceGrpc.TeamClusterServiceBlockingStub blockingStub = TeamClusterServiceGrpc.newBlockingStub(channel);
 		
-		FileData fd = FileData.newBuilder().setChunkId(ch.getChunkId()).setFilename(ch.getFileName()).setMessageId((long)Math.random()).build();
+		FileData fd = FileData.newBuilder().setChunkId(ch.getChunkId()).setFileName(ch.getFileName()).setMessageId((long)Math.random()).build();
 		
 		return blockingStub.getChunkLocations(fd);
 	}

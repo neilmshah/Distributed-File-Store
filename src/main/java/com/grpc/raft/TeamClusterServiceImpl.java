@@ -1,9 +1,15 @@
 package com.grpc.raft;
 
+import static io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+
 import org.apache.log4j.Logger;
 
 import grpc.Team;
 import grpc.TeamClusterServiceGrpc;
+import grpc.Team.ChunkLocations;
 import io.grpc.stub.StreamObserver;
 
 /**
@@ -68,6 +74,32 @@ public class TeamClusterServiceImpl extends TeamClusterServiceGrpc.TeamClusterSe
 		// When you are done, you must call onCompleted.
 		responseObserver.onCompleted();
 
+	}
+	
+	/**
+	 * Proxy to fetch file locations of a particular file and chunk from RAFT HashMap
+	 * 
+	 * rpc GetChunkLocations (FileData) returns (ChunkLocations)
+	 * 
+	 */
+	
+	@Override
+	public void getChunkLocations(grpc.Team.FileData request,
+		        io.grpc.stub.StreamObserver<grpc.Team.ChunkLocations> responseObserver) {
+		String key = request.getFileName()+"_"+ request.getChunkId();
+		String value = server.data.get(key);
+		
+		String[] valArr = value.split("\\$");
+		ArrayList<String> arrayList = new ArrayList<String>(Arrays.asList(valArr[1]));
+		
+		ChunkLocations ch = ChunkLocations.newBuilder().setChunkId(request.getChunkId())
+				.setFileName(request.getFileName())
+				.addAllDbAddresses(arrayList)
+				.setMessageId(request.getMessageId())
+				.setMaxChunks(Long.parseLong(valArr[0]))
+				.build();
+		responseObserver.onNext(ch);
+		responseObserver.onCompleted();
 	}
 
 
