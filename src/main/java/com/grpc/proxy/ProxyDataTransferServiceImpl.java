@@ -1,11 +1,14 @@
 package com.grpc.proxy;
 
-import static io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall;
-
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 import org.apache.log4j.Logger;
+
+import com.util.ConfigUtil;
+import com.util.Connection;
 
 import grpc.DataTransferServiceGrpc;
 import grpc.FileTransfer;
@@ -21,7 +24,7 @@ import io.grpc.stub.StreamObserver;
  */
 public class ProxyDataTransferServiceImpl extends DataTransferServiceGrpc.DataTransferServiceImplBase {
 
-	ProxyClient dbClient = new ProxyClient();
+	ProxyClient proxyClient = new ProxyClient();
 
 	final static Logger logger = Logger.getLogger(ProxyDataTransferServiceImpl.class);
 	
@@ -32,15 +35,21 @@ public class ProxyDataTransferServiceImpl extends DataTransferServiceGrpc.DataTr
 	public StreamObserver<FileTransfer.FileUploadData> uploadFile(StreamObserver<FileTransfer.FileInfo> responseObserver) {
 
 		return new StreamObserver<FileTransfer.FileUploadData>() {
-
+			
+			List<Connection> successFullDbNnodes= null;
 			String fileName;
 
 			@Override
 			public void onNext(FileUploadData value) {
+				successFullDbNnodes = new ArrayList<Connection>();
 				fileName = value.getFileName();
-				dbClient.uploadDataToDB(value);
+				for(Connection dbNode : ConfigUtil.databaseNodes ) {
+					proxyClient.uploadDataToDB(value, dbNode, successFullDbNnodes);
+				}
+				proxyClient.updateChunkLocations(successFullDbNnodes, ConfigUtil.raftNodes.get(0), value);
 			}
 
+			
 			@Override
 			public void onError(Throwable t) {
 				logger.error("Error occured in uploadFile" + t.getMessage());
@@ -59,6 +68,8 @@ public class ProxyDataTransferServiceImpl extends DataTransferServiceGrpc.DataTr
 
 		};
 	}
+	
+	
 
 	/**
 	 * Server-Side: Download chunks from Client to Proxy
@@ -69,7 +80,7 @@ public class ProxyDataTransferServiceImpl extends DataTransferServiceGrpc.DataTr
 	        io.grpc.stub.StreamObserver<grpc.FileTransfer.FileMetaData> responseObserver) {
 		Timestamp ts1  =  new Timestamp(System.currentTimeMillis());
 		
-		Iterator <FileMetaData> fileMetaDataList = dbClient.downloadChunk(request);
+		Iterator <FileMetaData> fileMetaDataList = proxyClient.downloadChunk(request);
 		
 		while(fileMetaDataList.hasNext()) {
 			responseObserver.onNext(fileMetaDataList.next());

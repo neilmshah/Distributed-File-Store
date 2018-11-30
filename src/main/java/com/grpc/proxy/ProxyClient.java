@@ -1,22 +1,28 @@
 package com.grpc.proxy;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+
+import com.util.Connection;
 
 import grpc.DataTransferServiceGrpc;
 import grpc.FileTransfer;
 import grpc.FileTransfer.ChunkInfo;
 import grpc.FileTransfer.FileMetaData;
 import grpc.FileTransfer.FileUploadData;
+import grpc.Team;
+import grpc.TeamClusterServiceGrpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 
 /**
- * This class acts a Client to DB Server
+ * This class acts a Client to DB Server and Raft Server
  * @author Sricheta's computer
  *
  */
@@ -27,9 +33,13 @@ public class ProxyClient {
 	/**
 	 * This method calls the db node to upload File chunk
 	 * TODO Update IP Address of Db
+	 * @param dbNode 
+	 * @param successFullDbNnodes 
 	 */
-	public void uploadDataToDB(FileUploadData fileUploadData) {
-		final ManagedChannel channel = ManagedChannelBuilder.forTarget("localhost:9000")
+	public void uploadDataToDB(FileUploadData fileUploadData, Connection dbNode, List<Connection> successFullDbNnodes) {
+		
+		String addressString = dbNode.getIP() +":"+ dbNode.getPort();
+		final ManagedChannel channel = ManagedChannelBuilder.forTarget(addressString)
 				.usePlaintext(true)
 				.build();
 
@@ -38,6 +48,7 @@ public class ProxyClient {
 		StreamObserver<FileTransfer.FileInfo> responseObserver = new StreamObserver<FileTransfer.FileInfo>() {
 			public void onNext(FileTransfer.FileInfo fileInfo) {
 				//send to DB
+				successFullDbNnodes.add(dbNode);
 				logger.debug("Successfully written chunk: "+fileInfo.getFileName());
 			}
 
@@ -84,5 +95,37 @@ public class ProxyClient {
 			}
 		channel.shutdown();
 		return fileMetaDataList;
+	}
+	
+	/**
+	 * This method will update the RAFT about chunk locations and whether upload to Db has been successful
+	 * @param successFullDbNnodes
+	 * @param raftNode 
+	 * @param value 
+	 */
+	public void updateChunkLocations(List<Connection> successFullDbNnodes, Connection raftNode, FileUploadData value) {
+		
+		logger.debug("updateChunkLocations rpc called ..");
+		String addressString = raftNode.getIP() +":"+ raftNode.getPort();
+		final ManagedChannel channel = ManagedChannelBuilder.forTarget(addressString)
+				.usePlaintext(true)
+				.build();
+		
+		List<String> dbNodesAsString = new ArrayList<String>();
+		for(Connection con : successFullDbNnodes) {
+			dbNodesAsString.add(con.getIP()+":"+ con.getPort());
+		}
+		//TODO I have not set message ID as I dont knwo how to set  a unique random message ID
+		TeamClusterServiceGrpc.TeamClusterServiceBlockingStub blockingStub = TeamClusterServiceGrpc.newBlockingStub(channel);
+		Team.ChunkLocations request =  Team.ChunkLocations.newBuilder().setChunkId(value.getChunkId())
+										.addAllDbAddresses(dbNodesAsString)
+										.setFileName(value.getFileName())
+										.setMaxChunks(value.getMaxChunks())
+										.build();
+
+	    Team.Ack response = blockingStub.updateChunkLocations(request);
+		logger.debug("updateChunkLocations rpc finished ..");
+	    channel.shutdownNow();
+		
 	}
 }
