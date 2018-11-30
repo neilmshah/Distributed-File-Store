@@ -3,10 +3,13 @@ package com.grpc.raft;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.util.ConfigUtil;
 import com.util.Connection;
+
 import grpc.RaftServiceGrpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -22,21 +25,29 @@ public class RaftServer {
 
 	//Raft Internals
 	protected ConcurrentHashMap<String, String> data;
+	protected int numEntries;
 	protected int raftState; //0 for follower, 1 for candidate, 2 for leader
-	protected int term;
-
+	protected long term;
+	protected long currentLeaderIndex;
 	protected boolean [] syncUsers;
+
+	private Timer electionTimer;
+	private TimerTask startElection;
 
 	//Raft Sending Messages
 	private List<ManagedChannel> channels;
 	protected List<RaftServiceGrpc.RaftServiceFutureStub> stubs;
 
-	public RaftServer(){
+	public RaftServer(int index){
 		data = new ConcurrentHashMap<String, String>();
+		numEntries = 0;
 		raftState = 0;
 		term = 0;
-
+		currentLeaderIndex = index;
 		syncUsers = new boolean[ConfigUtil.raftNodes.size()];
+
+		electionTimer = new Timer();
+		resetTimer();
 
 		channels = new ArrayList<ManagedChannel>();
 		stubs = new ArrayList<RaftServiceGrpc.RaftServiceFutureStub>();
@@ -59,16 +70,17 @@ public class RaftServer {
         	System.err.println("Must be integer that represents index of machine in config.json");
         	System.exit(1);
 		}
+		int index = -1;
 		try{
-			Integer.parseInt(args[0]);
+			index = Integer.parseInt(args[0]);
 		}catch (NumberFormatException e){
         	System.err.println("Argument must be an integer!");
         	System.exit(1);
 		}
+
 		//Get index of this computer/server in config file, start server
-        Connection connection =
-				ConfigUtil.raftNodes.get(Integer.parseInt(args[0]));
-        RaftServer myRaftServer = new RaftServer();
+        Connection connection =	ConfigUtil.raftNodes.get(index);
+        RaftServer myRaftServer = new RaftServer(index);
         Server server = ServerBuilder.forPort(8080)
           .addService(new DataTransferServiceImpl(myRaftServer))
           .addService(new RaftServiceImpl(myRaftServer))
@@ -94,6 +106,25 @@ public class RaftServer {
 		}
 		System.out.println("Awaiting server termination");
     }
+
+	/*
+	 * Sets/resets the deadline of the election timeout
+	 */
+	public void resetTimer(){
+		//Cancel previous startElection event if initialized, clean timer
+		if(startElection != null)
+			startElection.cancel();
+		electionTimer.purge();
+
+		//Create new startElection event, exec after 150-300 ms
+		startElection = new TimerTask() {
+			@Override
+			public void run() {
+				leaderTimeout();
+			}
+		};
+		electionTimer.schedule(startElection, (long)(150*(Math.random()+1)));
+	}
 
     //The following methods are called via Timer, thus will run on a new thread
 	//Just account for synchronization when doing this
