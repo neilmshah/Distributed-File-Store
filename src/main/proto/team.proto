@@ -13,6 +13,7 @@ message ChunkLocations {
     string fileName = 2;
     int64 chunkId = 3;
     repeated string dbAddresses = 4;
+    int64 maxChunks = 5;
 }
 
 message FileData {
