@@ -2,7 +2,6 @@ package com.grpc.raft;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 
 import com.grpc.proxy.HeartbeatService;
@@ -27,7 +26,7 @@ public class DataTransferServiceImpl extends DataTransferServiceGrpc.DataTransfe
 		new ConfigUtil();
 		server = serv;
 
-
+	}
 	/**
 	 * This methods gets list of active proxies based on hearbeat between RAFT and proxy node
 	 * @param request
@@ -111,8 +110,11 @@ public class DataTransferServiceImpl extends DataTransferServiceGrpc.DataTransfe
 		
 	     FileTransfer.FileLocationInfo response = null;
 		 ArrayList<FileTransfer.ProxyInfo> proxyList = new ArrayList<FileTransfer.ProxyInfo>();
-		 String value = (String)data.get(request.getFileName() + "_0");
+		 //TODO
+		// String value = (String) data.get(request.getFileName() + "_0");  change this. get this from the hashmap.
+		 String value = "";
 		 RaftClient client =new RaftClient();
+		 
 		 //If not found in own team
 		 if(value == null) {
 			 response = client.getFileFromOtherTeam(ConfigUtil.globalNodes, request);
