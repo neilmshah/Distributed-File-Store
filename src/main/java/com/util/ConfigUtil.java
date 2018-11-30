@@ -14,6 +14,7 @@ public class ConfigUtil {
 	public static List<Connection> raftNodes = new ArrayList<Connection>();
 	public static List<Connection> proxyNodes = new ArrayList<Connection>();
 	public static List<Connection> databaseNodes = new ArrayList<Connection>();
+	public static List<Connection> globalNodes = new ArrayList<Connection>();
 	
 	public ConfigUtil(){
 		Scanner scan = null;
@@ -33,7 +34,7 @@ public class ConfigUtil {
         JSONArray proxyArr = (JSONArray)config.get("proxyNodes");
         JSONArray raftArr = (JSONArray)config.get("raftNodes");
         JSONArray dbarr = (JSONArray)config.get("databaseNodes");
-       
+        JSONArray globalArr = (JSONArray)config.get("globalNodes");
         
     	for(int i = 0; i < proxyArr.length(); i++){
 			JSONObject obj = proxyArr.getJSONObject(i);
@@ -48,6 +49,11 @@ public class ConfigUtil {
 		for(int i = 0; i < dbarr.length(); i++){
 			JSONObject obj = dbarr.getJSONObject(i);
 			databaseNodes.add(new Connection(obj.getString("host"),obj.getInt("port")));
+		}
+		
+		for(int i = 0; i < globalArr.length(); i++){
+			JSONObject obj = dbarr.getJSONObject(i);
+			globalNodes.add(new Connection(obj.getString("host"),obj.getInt("port")));
 		}
     }
    
