@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import org.apache.log4j.Logger;
+
 import com.grpc.proxy.HeartbeatService;
 import com.util.ConfigUtil;
 
@@ -20,6 +22,7 @@ public class DataTransferServiceImpl extends DataTransferServiceGrpc.DataTransfe
 
 	private RaftServer server;
 	private HeartbeatService heartbeat;
+	final static Logger logger = Logger.getLogger(DataTransferServiceImpl.class);
 
 	public DataTransferServiceImpl(RaftServer serv){
 		super();
@@ -33,8 +36,10 @@ public class DataTransferServiceImpl extends DataTransferServiceGrpc.DataTransfe
 	 * @param responseObserver
 	 */
 	public void  RequestFileUpload(FileTransfer.FileUploadInfo request, StreamObserver<FileTransfer.ProxyList> responseObserver) {
-
+		
+		logger.debug("Inside RequestFileUpload ...");
 		List<FileTransfer.ProxyInfo> activeProxies = new ArrayList<FileTransfer.ProxyInfo>();
+		logger.debug("Getting live proxies ...");
 		boolean[] proxyStatus = heartbeat.getProxyStatus();
 
 		for(int i =0 ; i <proxyStatus.length; i++) {
@@ -46,11 +51,13 @@ public class DataTransferServiceImpl extends DataTransferServiceGrpc.DataTransfe
 				activeProxies.add(proxy);
 			}		  					
 		}
-
+		
+		logger.debug("Got "+ activeProxies.size() + "live proxies..");
 		FileTransfer.ProxyList response = FileTransfer.ProxyList.newBuilder()
 				.addAllLstProxy(activeProxies)
 				.build();
 		responseObserver.onNext(response);
+		logger.debug("Finished RequestFileUpload ...");
 		responseObserver.onCompleted();
 
 	}
