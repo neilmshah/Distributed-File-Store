@@ -1,11 +1,9 @@
 package com.grpc.raft;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.log4j.Logger;
 
-import com.grpc.proxy.ProxyClient;
 import com.util.Connection;
 
 import grpc.DataTransferServiceGrpc;

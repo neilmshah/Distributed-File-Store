@@ -4,6 +4,8 @@ import java.io.IOException;
 
 import org.apache.log4j.Logger;
 
+import com.util.ConfigUtil;
+
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 
@@ -14,6 +16,7 @@ public class ProxyServer {
 	 public static void main( String[] args )
 	    {
 		   logger.info( "Hello Proxy!" );
+		   new ConfigUtil();
 	        Server server = ServerBuilder.forPort(3000)
 	          .addService(new ProxyDataTransferServiceImpl())
 	          .build();

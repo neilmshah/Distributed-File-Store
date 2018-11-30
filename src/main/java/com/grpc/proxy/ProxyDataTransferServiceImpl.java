@@ -1,12 +1,14 @@
 package com.grpc.proxy;
 
-import static io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall;
-
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 import org.apache.log4j.Logger;
+
+import com.util.ConfigUtil;
+import com.util.Connection;
 
 import grpc.DataTransferServiceGrpc;
 import grpc.FileTransfer;
@@ -37,15 +39,21 @@ public class ProxyDataTransferServiceImpl extends DataTransferServiceGrpc.DataTr
 	public StreamObserver<FileTransfer.FileUploadData> uploadFile(StreamObserver<FileTransfer.FileInfo> responseObserver) {
 
 		return new StreamObserver<FileTransfer.FileUploadData>() {
-
+			
+			List<Connection> successFullDbNnodes= null;
 			String fileName;
 
 			@Override
 			public void onNext(FileUploadData value) {
+				successFullDbNnodes = new ArrayList<Connection>();
 				fileName = value.getFileName();
-				proxyClient.uploadDataToDB(value);
+				for(Connection dbNode : ConfigUtil.databaseNodes ) {
+					proxyClient.uploadDataToDB(value, dbNode, successFullDbNnodes);
+				}
+				proxyClient.updateChunkLocations(successFullDbNnodes, ConfigUtil.raftNodes.get(0), value);
 			}
 
+			
 			@Override
 			public void onError(Throwable t) {
 				logger.error("Error occured in uploadFile" + t.getMessage());
@@ -62,6 +70,8 @@ public class ProxyDataTransferServiceImpl extends DataTransferServiceGrpc.DataTr
 
 		};
 	}
+	
+	
 
 	/**
 	 *  Download chunks from Client to Proxy
@@ -73,10 +83,10 @@ public class ProxyDataTransferServiceImpl extends DataTransferServiceGrpc.DataTr
 	public void downloadChunk(grpc.FileTransfer.ChunkInfo request,
 	        io.grpc.stub.StreamObserver<grpc.FileTransfer.FileMetaData> responseObserver) {
 		Timestamp ts1  =  new Timestamp(System.currentTimeMillis());
-		
 		ChunkLocations ch = proxyClient.GetChunkLocations(request);
 			
 		Iterator <FileMetaData> fileMetaDataList = proxyClient.downloadChunk(request, ch.getDbAddressesList());
+
 		
 		while(fileMetaDataList.hasNext()) {
 			responseObserver.onNext(fileMetaDataList.next());
