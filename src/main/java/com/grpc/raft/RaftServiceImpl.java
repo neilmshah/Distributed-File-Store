@@ -37,7 +37,7 @@ public class RaftServiceImpl extends RaftServiceGrpc.RaftServiceImplBase{
 			//Set this term as request's term, step down, reset election timer
 			server.term = request.getTerm();
 			server.raftState = 0; //0 is follower
-			server.resetTimer();
+			server.resetTimeoutTimer();
 			Raft.Response response = Raft.Response.newBuilder()
 					.setAccept(true)
 					.setRequireUpdate(true)
@@ -49,7 +49,7 @@ public class RaftServiceImpl extends RaftServiceGrpc.RaftServiceImplBase{
 
 		//Mismatched stored data
 		if(request.getAppendedEntries() > server.numEntries){ //requester ahead
-			server.resetTimer();
+			server.resetTimeoutTimer();
 			Raft.Response response = Raft.Response.newBuilder()
 					.setAccept(false)
 					.setRequireUpdate(true)
@@ -68,7 +68,7 @@ public class RaftServiceImpl extends RaftServiceGrpc.RaftServiceImplBase{
 		}
 
 		//Everything is fine
-		server.resetTimer();
+		server.resetTimeoutTimer();
 		//If received a heartbeat after receiving an entry to add, commit it
 		if(setkey != null){
 			server.data.put(setkey, setvalue);
