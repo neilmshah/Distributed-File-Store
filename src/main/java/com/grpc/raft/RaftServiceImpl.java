@@ -114,18 +114,30 @@ public class RaftServiceImpl extends RaftServiceGrpc.RaftServiceImplBase{
 	public void RequestVote(Raft.VoteRequest request,
 							StreamObserver<Raft.Response> responseObserver){
 		//Candidate has higher term, vote yes and set own values
+		Raft.Response response = null;
 		if(request.getTerm() > server.term){
 			server.term = request.getTerm();
 			server.raftState = 0;
 			hasVoted = true;
 		//	voteIndex = request.getLeader();
+			response = Raft.Response.newBuilder()
+					.setAccept(true)
+					.setRequireUpdate(false)
+					.build();
 		}
 		//Candidate has lower term, vote no
 		else if(request.getTerm() < server.term){
-
+			response = Raft.Response.newBuilder()
+					.setAccept(false)
+					.setRequireUpdate(false)
+					.build();
 		}
 		else{
-
+			response = Raft.Response.newBuilder()
+					.setAccept(true)
+					.setRequireUpdate(false)
+					.build();
 		}
+		responseObserver.onNext(response);
 	}
 }

@@ -64,10 +64,9 @@ public class RaftServer {
 		channels = new ArrayList<ManagedChannel>();
 		stubs = new ArrayList<RaftServiceGrpc.RaftServiceFutureStub>();
 		for(int i = 0; i < ConfigUtil.raftNodes.size(); i++){
-			ManagedChannel channel = ManagedChannelBuilder.forAddress(
-					ConfigUtil.raftNodes.get(i).getIP(),
-					ConfigUtil.raftNodes.get(i).getPort()
-			).build();
+			String target = ConfigUtil.raftNodes.get(i).getIP() + ":" + ConfigUtil.raftNodes.get(i).getPort();
+			ManagedChannel channel = ManagedChannelBuilder.forTarget(target).usePlaintext(true).build();
+			//ManagedChannelBuilder.forAddress(ConfigUtil.raftNodes.get(i).getIP(),ConfigUtil.raftNodes.get(i).getPort()).build();
 			RaftServiceGrpc.RaftServiceFutureStub stub = RaftServiceGrpc.newFutureStub(channel);
 
 			channels.add(channel);

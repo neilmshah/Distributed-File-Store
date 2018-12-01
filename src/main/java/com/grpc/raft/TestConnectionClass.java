@@ -18,7 +18,7 @@ public class TestConnectionClass {
 
 	public static void main(String [] args){
 		ManagedChannel channel = ManagedChannelBuilder
-				.forAddress("localhost", 8700).build();
+				.forTarget("localhost:8700").usePlaintext(true).build();
 		TeamClusterServiceGrpc.TeamClusterServiceFutureStub stub =
 				TeamClusterServiceGrpc.newFutureStub(channel);
 
@@ -36,7 +36,8 @@ public class TestConnectionClass {
 
 			@Override
 			public void onFailure(Throwable throwable) {
-
+				System.out.println("Something broke!");
+				throwable.printStackTrace();
 			}
 		});
 	}
