@@ -76,6 +76,7 @@ public class RaftServer {
 	}
 
     public static void main( String[] args ) {
+		new ConfigUtil();
         System.out.println("Hello Raft!");
         if(args.length != 1){
         	System.err.println("Improper number of arguments. Must be 1!");
@@ -93,7 +94,7 @@ public class RaftServer {
 		//Get index of this computer/server in config file, start server
         Connection connection =	ConfigUtil.raftNodes.get(index);
         RaftServer myRaftServer = new RaftServer(index);
-        Server server = ServerBuilder.forPort(8080)
+        Server server = ServerBuilder.forPort(ConfigUtil.raftNodes.get(index).getPort())
           .addService(new DataTransferServiceImpl(myRaftServer))
           .addService(new RaftServiceImpl(myRaftServer))
           .addService(new TeamClusterServiceImpl(myRaftServer))
