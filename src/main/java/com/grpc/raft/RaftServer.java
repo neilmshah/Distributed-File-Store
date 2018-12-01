@@ -106,9 +106,6 @@ public class RaftServer {
 			e.printStackTrace();
 		}
 
-		//Begin timeout
-
-
         System.out.println("Raft Server started");
         
         try {
