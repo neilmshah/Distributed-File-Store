@@ -19,7 +19,14 @@ public class RaftServiceImpl extends RaftServiceGrpc.RaftServiceImplBase{
 		server = serv;
 	}
 
-	public void AppendEntries(Raft.EntryAppend request,
+	/**
+	 * Heartbeat message that is sent by the leader. May contain an entry to append.
+	 * Response accepts if the leader is valid (>= term #, >= # of entries)
+	 * @param request
+	 * @param responseObserver
+	 */
+	@Override
+	public void appendEntries(Raft.EntryAppend request,
 							  StreamObserver<Raft.Response> responseObserver){
 		//If this term > sent term
 		if(server.term > request.getTerm()){
@@ -96,7 +103,8 @@ public class RaftServiceImpl extends RaftServiceGrpc.RaftServiceImplBase{
 	 * @param request
 	 * @param responseObserver
 	 */
-	public void FixEntries(Raft.EntryFix request,
+	@Override
+	public void fixEntries(Raft.EntryFix request,
 						   StreamObserver<Raft.Response> responseObserver){
 		server.data.clear();
 		for(Raft.Entry entry : request.getMapList()){
@@ -111,7 +119,15 @@ public class RaftServiceImpl extends RaftServiceGrpc.RaftServiceImplBase{
 		responseObserver.onCompleted();
 	}
 
-	public void RequestVote(Raft.VoteRequest request,
+	/**
+	 * Called by a candidate requesting this node's vote. Will return
+	 * an accepting vote if the candidate is valid and this node hasn't
+	 * already voted for someone of the same term #.
+	 * @param request
+	 * @param responseObserver
+	 */
+	@Override
+	public void requestVote(Raft.VoteRequest request,
 							StreamObserver<Raft.Response> responseObserver){
 		//Candidate has higher term, vote yes and set own values
 		Raft.Response response = null;

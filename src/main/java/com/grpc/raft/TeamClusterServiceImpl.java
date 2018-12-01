@@ -39,6 +39,7 @@ public class TeamClusterServiceImpl extends TeamClusterServiceGrpc.TeamClusterSe
 		logger.debug("UpdateChunkLocations started.. ");
 		String key = request.getFileName()+KEY_DELIMINATOR+ request.getChunkId();
 		String value = server.data.get(key);
+		logger.debug("Value stored in hashmap for key "+key+": "+value);
 		
 		//MaxChunks$IP1,IP2,IP3
 		// If file is getting uploaded for the first time.
@@ -50,8 +51,10 @@ public class TeamClusterServiceImpl extends TeamClusterServiceGrpc.TeamClusterSe
 				builder.append(request.getDbAddresses(i));
 				builder.append(",");
 			}
-			value = value.substring(0, value.length() - 1); 
+			value = builder.toString();
+			value = value.substring(0, value.length() - 1);
 			server.data.put(key, value);
+			logger.debug("Put key in server! "+server.data.get(key));
 		}else {
 			//If key is already there, only update the db addresses.
 			String[] valArr = value.split("\\$");
@@ -91,7 +94,7 @@ public class TeamClusterServiceImpl extends TeamClusterServiceGrpc.TeamClusterSe
 		        io.grpc.stub.StreamObserver<grpc.Team.ChunkLocations> responseObserver) {
 		String key = request.getFileName()+KEY_DELIMINATOR+ request.getChunkId();
 		String value = server.data.get(key);
-		
+
 		String[] valArr = value.split("\\$");
 		ArrayList<String> arrayList = new ArrayList<String>(Arrays.asList(valArr[1]));
 		

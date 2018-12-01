@@ -10,11 +10,13 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * Contains test code for the RaftServer
  */
-public class TestConnectionClass {
+public class TestRaftConnectionClass {
 
 	public static void main(String [] args){
 		ManagedChannel channel = ManagedChannelBuilder
@@ -22,13 +24,30 @@ public class TestConnectionClass {
 		TeamClusterServiceGrpc.TeamClusterServiceBlockingStub stub =
 				TeamClusterServiceGrpc.newBlockingStub(channel);
 
+		String [] arr = new String[]{""};
+		ArrayList<String> addr = new ArrayList<String>(Arrays.asList(
+				new String[]{"localhost:8000", "localhost:9001", "127.0.0.1:1006"})
+		);
 		Team.ChunkLocations request = Team.ChunkLocations.newBuilder()
 				.setFileName("poop.jpg")
 				.setChunkId(0)
-				.addDbAddresses("localhost")
+				.addAllDbAddresses(addr)
 				.setMaxChunks(2)
 				.build();
 		System.out.println(stub.updateChunkLocations(request).getIsAck());
+		channel.shutdown();
+
+		channel = ManagedChannelBuilder.forTarget("localhost:8700").usePlaintext(true).build();
+		stub = TeamClusterServiceGrpc.newBlockingStub(channel);
+		Team.FileData req2 = Team.FileData.newBuilder()
+				.setFileName("poop.jpg")
+				.setChunkId(0)
+				.build();
+		Team.ChunkLocations res2 = stub.getChunkLocations(req2);
+		System.out.println("DB Addresses: ");
+		for(String s : res2.getDbAddressesList())
+			System.out.println(s);
+
 		/*
 		Futures.addCallback(stub.updateChunkLocations(request), new FutureCallback<Team.Ack>() {
 			@Override

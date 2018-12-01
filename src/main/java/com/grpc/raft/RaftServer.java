@@ -56,7 +56,7 @@ public class RaftServer {
 
 		electionTimer = new Timer();
 		heartbeatTimer = new Timer();
-		//resetTimeoutTimer();
+		//resetTimeoutTimer(); TODO uncomment when ready to test raft itself!
 		this.index = index;
 
 		votes = new AtomicInteger(0);
