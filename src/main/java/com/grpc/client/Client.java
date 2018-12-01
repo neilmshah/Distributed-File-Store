@@ -1,18 +1,22 @@
 package com.grpc.client;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.Scanner;
 
+import com.util.ConfigUtil;
+import com.util.Connection;
+
 import grpc.DataTransferServiceGrpc;
-import grpc.FileTransfer.*;
+import grpc.FileTransfer.FileInfo;
+import grpc.FileTransfer.FileList;
+import grpc.FileTransfer.FileLocationInfo;
+import grpc.FileTransfer.FileUploadInfo;
+import grpc.FileTransfer.ProxyInfo;
+import grpc.FileTransfer.RequestFileList;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 
@@ -25,6 +29,7 @@ public class Client {
 	}
 
 	public static void main(String[] args) throws IOException {
+		new ConfigUtil();
 		Scanner scan = new Scanner(System.in);
 		showMenu();
 		String readFile = "";
@@ -103,7 +108,7 @@ public class Client {
 	private static List <ProxyInfo> requestFileUpload(File f) {
 		System.out.println("requestFileUpload called ");
 		
-		ManagedChannel ch = getChannel("localhost: 8000");
+		ManagedChannel ch = getChannel(getRandomAddress(ConfigUtil.raftNodes));
 		DataTransferServiceGrpc.DataTransferServiceBlockingStub blockingStub = DataTransferServiceGrpc.newBlockingStub(ch);
 		
 		int chunkSize = 1024 * 1024;// 1MB
@@ -141,7 +146,7 @@ public class Client {
 		System.out.println("requestFileInfo called with " + fileName);
 		
 		//TODO Update RAFT Node address
-		ManagedChannel channel = getChannel("localhost:8000");
+		ManagedChannel channel = getChannel(getRandomAddress(ConfigUtil.raftNodes));
 		DataTransferServiceGrpc.DataTransferServiceBlockingStub blockingStub = DataTransferServiceGrpc.newBlockingStub(channel);
 		
 		FileInfo request = FileInfo.newBuilder().setFileName(fileName).build();
@@ -155,7 +160,7 @@ public class Client {
 		System.out.println("listFiles called");
 		
 		//TODO Update RAFT Node address
-		ManagedChannel channel = getChannel("localhost:8000");
+		ManagedChannel channel = getChannel(getRandomAddress(ConfigUtil.raftNodes));
 		
 		DataTransferServiceGrpc.DataTransferServiceBlockingStub blockingStub = DataTransferServiceGrpc.newBlockingStub(channel);
 		
@@ -163,6 +168,12 @@ public class Client {
 		FileList li = blockingStub.listFiles(request);
 		
 		System.out.println("File List: \n" + li);
+	}
+
+	private static String getRandomAddress(List<Connection> nodes) {
+		//int index = new Random().nextInt(nodes.size()); ucomment in final demo
+		int index = new Random().nextInt(0);
+		return nodes.get(index).getIP()+":"+ nodes.get(index).getPort();
 	}
 	
 }
