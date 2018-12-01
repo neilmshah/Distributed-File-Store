@@ -156,4 +156,42 @@ public class RaftServiceImpl extends RaftServiceGrpc.RaftServiceImplBase{
 		}
 		responseObserver.onNext(response);
 	}
+
+	/**
+	 * Called when the leader wants to poll a value set
+	 * @param request
+	 * @param responseObserver
+	 */
+	@Override
+	public void pollEntry(Raft.EntryAppend request,
+						  StreamObserver<Raft.Response> responseObserver){
+
+		boolean accept = false;
+		if(server.term <= request.getTerm() && server.numEntries <= request.getAppendedEntries()){
+			accept = true;
+		}
+
+		Raft.Response response = Raft.Response.newBuilder().setAccept(accept).build();
+		responseObserver.onNext(response);
+		responseObserver.onCompleted();
+	}
+
+	/**
+	 * Called by the leader when a majority of followers accept a value set.
+	 * When a follower receives this, it should set the key-value pair.
+	 * @param request
+	 * @param responseObserver
+	 */
+	@Override
+	public void acceptEntry(Raft.EntryAppend request,
+							StreamObserver<Raft.Response> responseObserver){
+
+		server.data.put(request.getEntry().getKey(), request.getEntry().getValue());
+		server.numEntries++;
+
+		boolean accept = true;
+		Raft.Response response = Raft.Response.newBuilder().setAccept(accept).build();
+		responseObserver.onNext(response);
+		responseObserver.onCompleted();
+	}
 }

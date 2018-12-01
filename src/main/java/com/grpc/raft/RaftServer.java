@@ -1,12 +1,12 @@
 package com.grpc.raft;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -36,11 +36,13 @@ public class RaftServer {
 	protected long currentLeaderIndex;
 	protected boolean [] syncUsers;
 	protected int index;
+	protected ConcurrentLinkedQueue<String> changes;
 
 	private Timer electionTimer, heartbeatTimer;
 	private TimerTask electionEvent, heartbeatEvent;
 
 	private AtomicInteger votes;
+	private AtomicInteger accepts; //number of nodes that accepted a change
 
 	//Raft Sending Messages
 	private List<ManagedChannel> channels;
@@ -48,11 +50,13 @@ public class RaftServer {
 
 	public RaftServer(int index){
 		data = new ConcurrentHashMap<String, String>();
+		data.put("test.txt#0", "2$10.0.20.1:8000,10.0.20.3:8000");
 		numEntries = 0;
 		raftState = 0;
 		term = 0;
 		currentLeaderIndex = index;
 		syncUsers = new boolean[ConfigUtil.raftNodes.size()];
+		changes = new ConcurrentLinkedQueue<String>();
 
 		electionTimer = new Timer();
 		heartbeatTimer = new Timer();
@@ -60,6 +64,7 @@ public class RaftServer {
 		this.index = index;
 
 		votes = new AtomicInteger(0);
+		accepts = new AtomicInteger(0);
 
 		channels = new ArrayList<ManagedChannel>();
 		stubs = new ArrayList<RaftServiceGrpc.RaftServiceFutureStub>();
@@ -75,8 +80,11 @@ public class RaftServer {
 	}
 
     public static void main( String[] args ) {
+		Logger log = Logger.getLogger("io.grpc");
+		log.setLevel(Level.WARNING);
 		new ConfigUtil();
-        System.out.println("Hello Raft!");
+
+		System.out.println("Hello Raft!");
         if(args.length != 1){
         	System.err.println("Improper number of arguments. Must be 1!");
         	System.err.println("Must be integer that represents index of machine in config.json");
@@ -222,9 +230,18 @@ public class RaftServer {
 				public void onSuccess(@Nullable Raft.Response response) {
 					if(response.getRequireUpdate()){
 						//Send message with hashmap
-						//Raft.EntryFix entries = Raft.EntryFix.newBuilder()
-						//		.addAllMap()
-						//		.build();
+						ArrayList<Raft.Entry> entryList = new ArrayList<Raft.Entry>();
+						for(java.util.Map.Entry<String, String> key : data.entrySet()){
+							entryList.add(
+									Raft.Entry.newBuilder()
+											.setKey(key.getKey())
+											.setValue(key.getValue())
+											.build()
+							);
+						}
+						Raft.EntryFix entries = Raft.EntryFix.newBuilder()
+								.addAllMap(entryList)
+								.build();
 					}
 					else if(!response.getRequireUpdate()){
 						//Do nothing, either everything is fine, or this leader is being ignored
@@ -240,15 +257,6 @@ public class RaftServer {
 			});
 		}
 		resetHeartbeatTimer();
-	}
-
-	/*
-	 * Leader told of new value to store, send to other nodes to poll them
-	 */
-	public void appendEntry(){
-		//Create async messages with timeouts
-		//Increment counter when receive an "accept" response
-		//When counter > ConfigUtil.raftNodes.size(), send a confirmation message
 	}
 
 

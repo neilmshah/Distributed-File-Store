@@ -36,7 +36,6 @@ public class DataTransferServiceImpl extends DataTransferServiceGrpc.DataTransfe
 		server = serv;
 		client = new RaftClient();
 		heartbeat = new HeartbeatService();
-
 	}
 	/**
 	 * This methods gets list of active proxies based on hearbeat between RAFT and proxy node
