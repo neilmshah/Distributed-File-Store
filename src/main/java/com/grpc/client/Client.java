@@ -29,8 +29,7 @@ public class Client {
 		showMenu();
 		String readFile = "";
 		List<ProxyInfo> proxyList = new ArrayList<ProxyInfo>();
-		int maxChunks;
-		String fileUploadInfo = null;
+		File f = null;
 		
 		while(scan.hasNext()) {
 			String s1 = scan.nextLine();
@@ -59,24 +58,12 @@ public class Client {
 				readFile = "";
 				break;
 			case "4":
-				System.out.println("Enter the fileName, fileSize and maxChunks separated by comma to upload: \n");
-				fileUploadInfo = scan.nextLine();
-				while(!checkFileUploadInfo(fileUploadInfo)) {
-					System.out.println("Press check the format and try again. \n");
-				}
-				proxyList = requestFileUpload(fileUploadInfo);
-				System.out.println("Press 5 to start uploading. \n");
+				System.out.println("Enter File Path");
+				f = new File(scan.nextLine());
+				proxyList = requestFileUpload(f);
 				break;
 			case "5":
-				System.out.println("Enter File location \n");
-				File f = new File(scan.nextLine());
-				splitFile(f, Integer.parseInt(fileUploadInfo.split(",")[1]));
-				if(proxyList.isEmpty()) {
-					System.out.println("Please Press 4 to request file upload. \n");
-				} else {
-					uploadFile(proxyList, fileUploadInfo);
-					fileUploadInfo = null;
-				}
+				uploadFile(f, proxyList);
 				break;
 			default:
 				System.out.println("Invalid option. Press 0 to see Menu\n");
@@ -87,22 +74,21 @@ public class Client {
 		scan.close();
 	}
 
-	private static void uploadFile(List <ProxyInfo> proxyList, String fileUploadInfo) {
+	private static void uploadFile(File f, List<ProxyInfo> proxyList) {
 		
 		// TODO Split file into Chunks
 		
 		
 		
 		int proxyNum = proxyList.size();
-		String [] words = fileUploadInfo.split(",");
 		
 		ArrayList<ManagedChannel> chList = new ArrayList<ManagedChannel>();
 		for(ProxyInfo pr: proxyList) {
 			chList.add(getChannel(pr.getIp() + pr.getPort()));
 		}
-		
+//		
 		//TODO Create stub per each channel
-		DataTransferServiceGrpc.DataTransferServiceStub ayncStub = DataTransferServiceGrpc.newStub(chList.get(1));
+//		DataTransferServiceGrpc.DataTransferServiceStub ayncStub = DataTransferServiceGrpc.newStub(chList.get(1));
 	}
 
 	private static boolean checkFileUploadInfo(String line) {
@@ -114,18 +100,20 @@ public class Client {
 		
 	}
 
-	private static List <ProxyInfo> requestFileUpload(String fileUploadInfo) {
-		// TODO Auto-generated method stub
-		System.out.println("requestFileUpload called with" + fileUploadInfo);
+	private static List <ProxyInfo> requestFileUpload(File f) {
+		System.out.println("requestFileUpload called ");
 		
 		ManagedChannel ch = getChannel("localhost: 8000");
 		DataTransferServiceGrpc.DataTransferServiceBlockingStub blockingStub = DataTransferServiceGrpc.newBlockingStub(ch);
 		
-		String [] fileDetails = fileUploadInfo.split(",");
+		int chunkSize = 1024 * 1024;// 1MB
+		
+		long maxChunks = f.length()/chunkSize;
+		
 		FileUploadInfo request = FileUploadInfo.newBuilder()
-				.setFileName(fileDetails[0])
-				.setFileSize(Float.parseFloat(fileDetails[1]))
-				.setMaxChunks(Long.parseLong(fileDetails[2]))
+				.setFileName(f.getName())
+				.setFileSize((float)f.length())
+				.setMaxChunks(maxChunks)
 				.build();
 		
 		return blockingStub.requestFileUpload(request).getLstProxyList();
@@ -177,30 +165,4 @@ public class Client {
 		System.out.println("File List: \n" + li);
 	}
 	
-	public static void splitFile(File f, int fileSize) throws IOException {
-
-        int chunkSize = 1024 * 1024;// 1MB
-        byte[] buffer = new byte[chunkSize];
-
-        String fileName = f.getName();
-        
-        FileInputStream fis = new FileInputStream(f);
-        BufferedInputStream bis = new BufferedInputStream(fis, chunkSize);
-        
-        OutputStream out = null;
-        int totalBytes = 0;
-        
-        while(totalBytes <= fileSize) {
-        		totalBytes = bis.read(buffer);
-        }
-        
-        BufferedOutputStream bos = new BufferedOutputStream(out, chunkSize);
-        
-        bos.write(buffer, 0, buffer.length);
-        System.out.println("git");
-        
-       
-
-
-    }
 }
