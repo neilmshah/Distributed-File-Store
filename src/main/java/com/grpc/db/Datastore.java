@@ -18,7 +18,7 @@ public class Datastore {
     Datastore(){
         config = new ConfigUtil();
         dataTrasferServiceImpl = new DatabaseDataTransferServiceImpl();
-        server = ServerBuilder.forPort(config.databaseNodes.get(0).getPort()).addService(dataTrasferServiceImpl).build();
+        server = ServerBuilder.forPort(config.databaseNodes.get(1).getPort()).addService(dataTrasferServiceImpl).build();
     }
 
     private void start(){

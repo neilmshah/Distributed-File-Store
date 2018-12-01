@@ -4,7 +4,8 @@ public class HeartbeatService {
 	
 	//TODO
 	public boolean[] getProxyStatus() {
-		return null;
+		
+		return new boolean[]{true, true, true};
 	}
 
 }

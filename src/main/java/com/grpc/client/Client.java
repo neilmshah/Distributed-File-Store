@@ -75,18 +75,17 @@ public class Client {
 	}
 
 	private static void uploadFile(File f, List<ProxyInfo> proxyList) {
-		
-		// TODO Split file into Chunks
-		
-		
-		
 		int proxyNum = proxyList.size();
 		
 		ArrayList<ManagedChannel> chList = new ArrayList<ManagedChannel>();
 		for(ProxyInfo pr: proxyList) {
 			chList.add(getChannel(pr.getIp() + pr.getPort()));
 		}
-//		
+		
+		int chunkSize = 1024 * 1024;
+		// TODO Split file into Chunks
+		
+	
 		//TODO Create stub per each channel
 //		DataTransferServiceGrpc.DataTransferServiceStub ayncStub = DataTransferServiceGrpc.newStub(chList.get(1));
 	}
