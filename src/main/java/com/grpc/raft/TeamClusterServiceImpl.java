@@ -33,7 +33,8 @@ public class TeamClusterServiceImpl extends TeamClusterServiceGrpc.TeamClusterSe
 	 * @param request
 	 * @param responseObserver
 	 */
-	public void UpdateChunkLocations(Team.ChunkLocations request, StreamObserver<Team.Ack> responseObserver) {
+	@Override
+	public void updateChunkLocations(Team.ChunkLocations request, StreamObserver<Team.Ack> responseObserver) {
 
 		logger.debug("UpdateChunkLocations started.. ");
 		String key = request.getFileName()+KEY_DELIMINATOR+ request.getChunkId();

@@ -56,7 +56,7 @@ public class RaftServer {
 
 		electionTimer = new Timer();
 		heartbeatTimer = new Timer();
-		resetTimeoutTimer();
+		//resetTimeoutTimer();
 		this.index = index;
 
 		votes = new AtomicInteger(0);

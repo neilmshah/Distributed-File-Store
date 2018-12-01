@@ -42,7 +42,8 @@ public class DataTransferServiceImpl extends DataTransferServiceGrpc.DataTransfe
 	 * @param request
 	 * @param responseObserver
 	 */
-	public void  RequestFileUpload(FileTransfer.FileUploadInfo request, StreamObserver<FileTransfer.ProxyList> responseObserver) {
+	@Override
+	public void requestFileUpload(FileTransfer.FileUploadInfo request, StreamObserver<FileTransfer.ProxyList> responseObserver) {
 
 		logger.debug("Inside RequestFileUpload ...");
 
@@ -65,7 +66,8 @@ public class DataTransferServiceImpl extends DataTransferServiceGrpc.DataTransfe
 	 * @throws ExecutionException
 	 * @throws InterruptedException
 	 */
-	public void ListFiles(FileTransfer.RequestFileList request, StreamObserver<FileTransfer.FileList> responseObserver) {
+	@Override
+	public void listFiles(FileTransfer.RequestFileList request, StreamObserver<FileTransfer.FileList> responseObserver) {
 
 		logger.debug("ListFiles started...");
 		List<String> fileList = new ArrayList<String>();
@@ -103,7 +105,8 @@ public class DataTransferServiceImpl extends DataTransferServiceGrpc.DataTransfe
 	 * @param request
 	 * @param responseObserver
 	 */
-	public void GetFileLocation(FileTransfer.FileInfo request, StreamObserver<FileTransfer.FileLocationInfo> responseObserver){
+	@Override
+	public void getFileLocation(FileTransfer.FileInfo request, StreamObserver<FileTransfer.FileLocationInfo> responseObserver){
 
 		logger.debug("GetFileLocation started...");
 
@@ -155,7 +158,8 @@ public class DataTransferServiceImpl extends DataTransferServiceGrpc.DataTransfe
 	 * @param request
 	 * @param responseObserver
 	 */
-	public void  RequestFileInfo(FileTransfer.FileInfo request, StreamObserver<FileTransfer.FileLocationInfo> responseObserver){
+	@Override
+	public void requestFileInfo(FileTransfer.FileInfo request, StreamObserver<FileTransfer.FileLocationInfo> responseObserver){
 
 		logger.debug("RequestFileInfo started...");
 		FileTransfer.FileLocationInfo response = null;

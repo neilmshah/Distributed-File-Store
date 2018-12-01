@@ -19,15 +19,17 @@ public class TestConnectionClass {
 	public static void main(String [] args){
 		ManagedChannel channel = ManagedChannelBuilder
 				.forTarget("localhost:8700").usePlaintext(true).build();
-		TeamClusterServiceGrpc.TeamClusterServiceFutureStub stub =
-				TeamClusterServiceGrpc.newFutureStub(channel);
+		TeamClusterServiceGrpc.TeamClusterServiceBlockingStub stub =
+				TeamClusterServiceGrpc.newBlockingStub(channel);
 
 		Team.ChunkLocations request = Team.ChunkLocations.newBuilder()
 				.setFileName("poop.jpg")
 				.setChunkId(0)
-				.setDbAddresses(0, "localhost")
+				.addDbAddresses("localhost")
 				.setMaxChunks(2)
 				.build();
+		System.out.println(stub.updateChunkLocations(request).getIsAck());
+		/*
 		Futures.addCallback(stub.updateChunkLocations(request), new FutureCallback<Team.Ack>() {
 			@Override
 			public void onSuccess(@Nullable Team.Ack ack) {
@@ -40,5 +42,6 @@ public class TestConnectionClass {
 				throwable.printStackTrace();
 			}
 		});
+		*/
 	}
 }
