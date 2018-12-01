@@ -21,6 +21,7 @@ import io.grpc.stub.StreamObserver;
 public class DBTransferServiceImpl extends DataTransferServiceGrpc.DataTransferServiceImplBase {
 
 	private ConcurrentHashMap<String , byte[]> db;
+	private final String KEY_DELIMINATOR= "#";
 	
 	public DBTransferServiceImpl(ConcurrentHashMap<String , byte[]> map){
 		super();
@@ -41,7 +42,7 @@ public class DBTransferServiceImpl extends DataTransferServiceGrpc.DataTransferS
 			public void onNext(FileUploadData value) {
 				filename = value.getFileName();
 				bytes = value.getFileNameBytes().toByteArray();
-				key = value.getFileName()+"_"+value.getChunkId();
+				key = value.getFileName()+KEY_DELIMINATOR+value.getChunkId();
 				db.put(key, bytes);
 			}
 

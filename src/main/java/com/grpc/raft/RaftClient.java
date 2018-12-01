@@ -9,6 +9,7 @@ import com.util.Connection;
 import grpc.DataTransferServiceGrpc;
 import grpc.FileTransfer;
 import grpc.FileTransfer.FileInfo;
+import grpc.FileTransfer.RequestFileList;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 
@@ -30,9 +31,9 @@ public class RaftClient {
 	 */
 	
 	
-	public FileTransfer.FileLocationInfo getFileFromOtherTeam(List<Connection> globalNodes, FileInfo request) {
+	public FileTransfer.FileLocationInfo getFileLocationFromOtherTeam(List<Connection> globalNodes, FileInfo request) {
 		
-		logger.debug("Getting File from all the clusters..");
+		logger.debug("Getting File locations from all the clusters..");
 		ManagedChannel channel = null;
 		String addressString = null;
 		for(Connection connection : globalNodes) {
@@ -56,5 +57,35 @@ public class RaftClient {
 		}
 		
 		return null;
+	}
+	
+	/**
+	 * This method calls the list File rpc of all the others teams. Adds to the Arraylist and returns to Rft Server
+	 * @param globalNodes
+	 * @param fileList
+	 * @param request 
+	 */
+	public void listFilesFromOtherTeams(List<Connection> globalNodes, List<String> fileList, RequestFileList request) {
+		
+		logger.debug("List Files from all other clusters..");
+		ManagedChannel channel = null;
+		String addressString = null;
+		for(Connection connection : globalNodes) {
+				
+			addressString = connection.getIP() +":" +  connection.getPort();
+			channel = ManagedChannelBuilder.forTarget(addressString)
+					.usePlaintext(true)
+					.build();
+			
+			DataTransferServiceGrpc.DataTransferServiceBlockingStub stub = DataTransferServiceGrpc.newBlockingStub(channel);
+			FileTransfer.FileList response =  stub.listFiles(request);
+			if(response.getLstFileNamesCount() != 0) {
+				for(int i = 0;i< response.getLstFileNamesCount();i++) {
+					fileList.add(response.getLstFileNames(i));
+				}
+			}
+		
+		}
+
 	}
 }

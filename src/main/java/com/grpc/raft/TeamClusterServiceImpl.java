@@ -19,6 +19,7 @@ import io.grpc.stub.StreamObserver;
  */
 public class TeamClusterServiceImpl extends TeamClusterServiceGrpc.TeamClusterServiceImplBase{
 
+	private final String KEY_DELIMINATOR= "#";
 	private RaftServer server;
 	final static Logger logger = Logger.getLogger(TeamClusterServiceImpl.class);
 
@@ -35,7 +36,7 @@ public class TeamClusterServiceImpl extends TeamClusterServiceGrpc.TeamClusterSe
 	public void UpdateChunkLocations(Team.ChunkLocations request, StreamObserver<Team.Ack> responseObserver) {
 
 		logger.debug("UpdateChunkLocations started.. ");
-		String key = request.getFileName()+"_"+ request.getChunkId();
+		String key = request.getFileName()+KEY_DELIMINATOR+ request.getChunkId();
 		String value = server.data.get(key);
 		
 		//MaxChunks$IP1,IP2,IP3
@@ -87,7 +88,7 @@ public class TeamClusterServiceImpl extends TeamClusterServiceGrpc.TeamClusterSe
 	@Override
 	public void getChunkLocations(grpc.Team.FileData request,
 		        io.grpc.stub.StreamObserver<grpc.Team.ChunkLocations> responseObserver) {
-		String key = request.getFileName()+"_"+ request.getChunkId();
+		String key = request.getFileName()+KEY_DELIMINATOR+ request.getChunkId();
 		String value = server.data.get(key);
 		
 		String[] valArr = value.split("\\$");
