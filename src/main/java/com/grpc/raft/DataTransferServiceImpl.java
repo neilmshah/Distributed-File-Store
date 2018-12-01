@@ -102,7 +102,7 @@ public class DataTransferServiceImpl extends DataTransferServiceGrpc.DataTransfe
 	 */
 	public void GetFileLocation(FileTransfer.FileInfo request, StreamObserver<FileTransfer.FileLocationInfo> responseObserver){
 		
-		//TODO waiting for Vishnu to know the structure of the HashMap.
+		//TODO waiting for Vishnu to return the list of live proxies
 		
 		
 		
@@ -128,7 +128,7 @@ public class DataTransferServiceImpl extends DataTransferServiceGrpc.DataTransfe
 		 }else {
 			 
 			 // TODO
-			 // waiting for Vishnu to know the structure of the HashMap.
+			 // waiting for Vishnu to return the list of live proxies
 			 
 		 }
 		 
