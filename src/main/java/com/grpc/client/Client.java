@@ -197,6 +197,7 @@ public class Client {
         BufferedOutputStream bos = new BufferedOutputStream(out, chunkSize);
         
         bos.write(buffer, 0, buffer.length);
+        System.out.println("git");
         
        
 
