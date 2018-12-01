@@ -24,14 +24,17 @@ import io.grpc.stub.StreamObserver;
 public class DataTransferServiceImpl extends DataTransferServiceGrpc.DataTransferServiceImplBase{
 
 
+	private final String KEY_DELIMINATOR= "#";
 	private RaftServer server;
 	private HeartbeatService heartbeat;
 	final static Logger logger = Logger.getLogger(DataTransferServiceImpl.class);
+	RaftClient client = null;
 
 	public DataTransferServiceImpl(RaftServer serv){
 		super();
 		new ConfigUtil();
 		server = serv;
+		client = new RaftClient();
 
 	}
 	/**
@@ -42,14 +45,14 @@ public class DataTransferServiceImpl extends DataTransferServiceGrpc.DataTransfe
 	public void  RequestFileUpload(FileTransfer.FileUploadInfo request, StreamObserver<FileTransfer.ProxyList> responseObserver) {
 
 		logger.debug("Inside RequestFileUpload ...");
-	
+
 		List<FileTransfer.ProxyInfo> activeProxies= getLiveProxies();
-		
+
 		FileTransfer.ProxyList response = FileTransfer.ProxyList.newBuilder()
 				.addAllLstProxy(activeProxies)
 				.build();
 		responseObserver.onNext(response);
-		
+
 		logger.debug("Finished RequestFileUpload ...");
 		responseObserver.onCompleted();
 
@@ -65,23 +68,30 @@ public class DataTransferServiceImpl extends DataTransferServiceGrpc.DataTransfe
 	public void ListFiles(FileTransfer.RequestFileList request, StreamObserver<FileTransfer.FileList> responseObserver) {
 
 		logger.debug("ListFiles started...");
-		Iterator<Map.Entry<String, String>> it = server.data.entrySet().iterator();
-
+		List<String> fileList = new ArrayList<String>();
 		FileTransfer.FileList.Builder responseBuilder = grpc.FileTransfer.FileList.newBuilder();
-		int count =0;
+		FileTransfer.FileList response = null;
+		//If the call came from another cluster.
+		if(request.getIsClient()) {
+			
+			logger.debug("ListFiles rpc going to all clusters...");
+			client.listFilesFromOtherTeams(ConfigUtil.globalNodes, fileList, request);
+		}
+		//send your own files.
+
+		Iterator<Map.Entry<String, String>> it = server.data.entrySet().iterator();
 		while(it.hasNext()){
 
 			Map.Entry<String, String> entry  = it.next();
-			String[] value = entry.getKey().split("_");
-			responseBuilder.setLstFileNames(count, value[0]);
-			count++;
-		}
+			String[] value = entry.getKey().split(KEY_DELIMINATOR);
+			fileList.add(value[0]);
 
+		}
+		response = responseBuilder.addAllLstFileNames(fileList).build();
 		if(responseBuilder.getLstFileNamesCount() == 0) {
-			logger.debug("No Files Found in my cluster!!! ");
+			logger.debug("No Files Founds in own  cluster!!! ");
 		}
 
-		FileTransfer.FileList response = responseBuilder.build();
 		responseObserver.onNext(response);
 		logger.debug("ListFiles ended...");
 		responseObserver.onCompleted();
@@ -96,13 +106,13 @@ public class DataTransferServiceImpl extends DataTransferServiceGrpc.DataTransfe
 	public void GetFileLocation(FileTransfer.FileInfo request, StreamObserver<FileTransfer.FileLocationInfo> responseObserver){
 
 		logger.debug("GetFileLocation started...");
-		
+
 		List<FileTransfer.ProxyInfo> activeProxies= getLiveProxies();
 		boolean isFileFound = false;
 		String  maxChunks="0";
-		if(server.data.get(request.getFileName()+"_0")!= null) {
+		if(server.data.get(request.getFileName()+KEY_DELIMINATOR+"0")!= null) {
 			isFileFound = true;
-			String value =  server.data.get(request.getFileName()+"_0");
+			String value =  server.data.get(request.getFileName()+KEY_DELIMINATOR+"0");
 			maxChunks = value.split("\\$")[0];
 		}
 
@@ -118,13 +128,13 @@ public class DataTransferServiceImpl extends DataTransferServiceGrpc.DataTransfe
 		responseObserver.onCompleted();
 
 	}
-	
+
 	/**
 	 * Utility method to get live proxies
 	 * @return
 	 */
 	private List<ProxyInfo> getLiveProxies() {
-		
+
 		logger.debug("Getting live proxies ...");
 		List<FileTransfer.ProxyInfo> activeProxies = new ArrayList<FileTransfer.ProxyInfo>();
 		boolean[] proxyStatus = heartbeat.getProxyStatus();
@@ -150,8 +160,7 @@ public class DataTransferServiceImpl extends DataTransferServiceGrpc.DataTransfe
 		logger.debug("RequestFileInfo started...");
 		FileTransfer.FileLocationInfo response = null;
 		List<FileTransfer.ProxyInfo> activeProxies = null;
-		String value = server.data.get(request.getFileName() + "_0");  
-		RaftClient client =new RaftClient();
+		String value = server.data.get(request.getFileName() + KEY_DELIMINATOR+"0");  
 		String maxChunks = "0";
 		//If not found in own team
 		if(value == null) {
@@ -168,7 +177,7 @@ public class DataTransferServiceImpl extends DataTransferServiceGrpc.DataTransfe
 					.addAllLstProxy(activeProxies)
 					.build();
 		}
-		
+
 		// This means that file is found nowhere neither in our cluster nor in other clusters.
 		if(response == null) {
 			logger.log(Level.WARN, "File is not found anywhere - neither in our cluster nor in other clusters");
@@ -178,7 +187,7 @@ public class DataTransferServiceImpl extends DataTransferServiceGrpc.DataTransfe
 					.setMaxChunks(0)
 					.build();
 		}
-		
+
 
 		responseObserver.onNext(response);
 		logger.debug("RequestFileInfo ended...");
