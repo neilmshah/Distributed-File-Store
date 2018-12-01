@@ -56,7 +56,7 @@ public class RaftServer {
 
 		electionTimer = new Timer();
 		heartbeatTimer = new Timer();
-		resetTimeoutTimer();
+		//resetTimeoutTimer(); TODO uncomment when ready to test raft itself!
 		this.index = index;
 
 		votes = new AtomicInteger(0);
@@ -64,10 +64,9 @@ public class RaftServer {
 		channels = new ArrayList<ManagedChannel>();
 		stubs = new ArrayList<RaftServiceGrpc.RaftServiceFutureStub>();
 		for(int i = 0; i < ConfigUtil.raftNodes.size(); i++){
-			ManagedChannel channel = ManagedChannelBuilder.forAddress(
-					ConfigUtil.raftNodes.get(i).getIP(),
-					ConfigUtil.raftNodes.get(i).getPort()
-			).build();
+			String target = ConfigUtil.raftNodes.get(i).getIP() + ":" + ConfigUtil.raftNodes.get(i).getPort();
+			ManagedChannel channel = ManagedChannelBuilder.forTarget(target).usePlaintext(true).build();
+			//ManagedChannelBuilder.forAddress(ConfigUtil.raftNodes.get(i).getIP(),ConfigUtil.raftNodes.get(i).getPort()).build();
 			RaftServiceGrpc.RaftServiceFutureStub stub = RaftServiceGrpc.newFutureStub(channel);
 
 			channels.add(channel);
@@ -76,6 +75,7 @@ public class RaftServer {
 	}
 
     public static void main( String[] args ) {
+		new ConfigUtil();
         System.out.println("Hello Raft!");
         if(args.length != 1){
         	System.err.println("Improper number of arguments. Must be 1!");
@@ -93,7 +93,7 @@ public class RaftServer {
 		//Get index of this computer/server in config file, start server
         Connection connection =	ConfigUtil.raftNodes.get(index);
         RaftServer myRaftServer = new RaftServer(index);
-        Server server = ServerBuilder.forPort(8080)
+        Server server = ServerBuilder.forPort(ConfigUtil.raftNodes.get(index).getPort())
           .addService(new DataTransferServiceImpl(myRaftServer))
           .addService(new RaftServiceImpl(myRaftServer))
           .addService(new TeamClusterServiceImpl(myRaftServer))
