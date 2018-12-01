@@ -35,6 +35,7 @@ public class DataTransferServiceImpl extends DataTransferServiceGrpc.DataTransfe
 		new ConfigUtil();
 		server = serv;
 		client = new RaftClient();
+		heartbeat = new HeartbeatService();
 
 	}
 	/**
