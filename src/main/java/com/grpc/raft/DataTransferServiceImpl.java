@@ -45,7 +45,7 @@ public class DataTransferServiceImpl extends DataTransferServiceGrpc.DataTransfe
 	@Override
 	public void requestFileUpload(FileTransfer.FileUploadInfo request, StreamObserver<FileTransfer.ProxyList> responseObserver) {
 
-		logger.debug("Inside RequestFileUpload ...");
+		logger.debug("RequestFileUpload arrived...");
 
 		List<FileTransfer.ProxyInfo> activeProxies= getLiveProxies();
 
