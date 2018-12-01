@@ -35,7 +35,7 @@ public class TestRaftConnectionClass {
 				.setMaxChunks(2)
 				.build();
 		System.out.println(stub.updateChunkLocations(request).getIsAck());
-		channel.shutdown();
+		//channel.shutdown();
 
 		channel = ManagedChannelBuilder.forTarget("localhost:8700").usePlaintext(true).build();
 		stub = TeamClusterServiceGrpc.newBlockingStub(channel);

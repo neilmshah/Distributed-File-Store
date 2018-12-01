@@ -4,7 +4,14 @@ import static io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 
+import com.util.ConfigUtil;
+import com.util.Connection;
+import grpc.Raft;
+import grpc.RaftServiceGrpc;
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
 import org.apache.log4j.Logger;
 
 import grpc.Team;
@@ -36,6 +43,18 @@ public class TeamClusterServiceImpl extends TeamClusterServiceGrpc.TeamClusterSe
 	@Override
 	public void updateChunkLocations(Team.ChunkLocations request, StreamObserver<Team.Ack> responseObserver) {
 
+		//Forward command to leader and return that
+		if(server.raftState != 2) {
+			Connection con = ConfigUtil.raftNodes.get((int) server.currentLeaderIndex);
+			ManagedChannel channel = ManagedChannelBuilder
+					.forTarget(con.getIP() + ":" + con.getPort()).usePlaintext(true).build();
+			TeamClusterServiceGrpc.TeamClusterServiceBlockingStub stub = TeamClusterServiceGrpc.newBlockingStub(channel);
+
+			responseObserver.onNext(stub.updateChunkLocations(request));
+			responseObserver.onCompleted();
+			return;
+		}
+
 		logger.debug("UpdateChunkLocations started.. ");
 		String key = request.getFileName()+KEY_DELIMINATOR+ request.getChunkId();
 		String value = server.data.get(key);
@@ -53,7 +72,7 @@ public class TeamClusterServiceImpl extends TeamClusterServiceGrpc.TeamClusterSe
 			}
 			value = builder.toString();
 			value = value.substring(0, value.length() - 1);
-			server.data.put(key, value);
+			//server.data.put(key, value);
 			logger.debug("Put key in server! "+server.data.get(key));
 		}else {
 			//If key is already there, only update the db addresses.
@@ -65,9 +84,14 @@ public class TeamClusterServiceImpl extends TeamClusterServiceGrpc.TeamClusterSe
 			}
 			valArr[1] = builder.toString().substring(0, builder.length() - 1);
 			String newValue = valArr[0] + "$"+ valArr[1];
-			server.data.put(key, newValue);
+			//server.data.put(key, newValue);
 			
 		}
+
+		//TODO how to tell server to share a value with the others
+		//server.changes.add(key+"\\"+value);
+		if(pollValueChange(key, value))
+			confirmValueChange(key, value);
 		
 		Team.Ack response = Team.Ack.newBuilder()
 				.setMessageId(request.getMessageId())
@@ -80,6 +104,70 @@ public class TeamClusterServiceImpl extends TeamClusterServiceGrpc.TeamClusterSe
 		logger.debug("UpdateChunkLocations ended.. ");
 		responseObserver.onCompleted();
 
+	}
+
+	private boolean pollValueChange(String key, String value){
+		//Check with other nodes if we can make a change
+		int accepts = 1;
+		for(int i = 0; i < ConfigUtil.raftNodes.size(); i++){
+			if(i == server.index)
+				continue;
+
+			Connection con = ConfigUtil.raftNodes.get(i);
+			ManagedChannel channel = ManagedChannelBuilder
+					.forTarget(con.getIP()+":"+con.getPort())
+					.usePlaintext(true).build();
+
+			RaftServiceGrpc.RaftServiceBlockingStub stub =
+					RaftServiceGrpc.newBlockingStub(channel);
+
+			Raft.Entry entry = Raft.Entry.newBuilder()
+					.setKey(key).setValue(value).build();
+			Raft.EntryAppend voteReq = Raft.EntryAppend.newBuilder()
+					.setEntry(entry)
+					.setTerm(server.term)
+					.setLeader(server.index)
+					.setAppendedEntries(server.numEntries)
+					.build();
+
+			Raft.Response vote = stub.withDeadlineAfter(25, TimeUnit.MILLISECONDS).pollEntry(voteReq);
+			if(vote.getAccept())
+				accepts++;
+
+			//Check if no point continuing to vote
+			if(accepts > ConfigUtil.raftNodes.size()/2)
+				return true;
+		}
+		if(accepts > ConfigUtil.raftNodes.size()/2)
+			return true;
+		else
+			return false;
+	}
+
+	private void confirmValueChange(String key, String value){
+		for(int i = 0; i < ConfigUtil.raftNodes.size(); i++){
+			if(i == server.index)
+				continue;
+
+			Connection con = ConfigUtil.raftNodes.get(i);
+			ManagedChannel channel = ManagedChannelBuilder
+					.forTarget(con.getIP()+":"+con.getPort())
+					.usePlaintext(true).build();
+
+			RaftServiceGrpc.RaftServiceBlockingStub stub =
+					RaftServiceGrpc.newBlockingStub(channel);
+
+			Raft.Entry entry = Raft.Entry.newBuilder()
+					.setKey(key).setValue(value).build();
+			Raft.EntryAppend voteReq = Raft.EntryAppend.newBuilder()
+					.setEntry(entry)
+					.setTerm(server.term)
+					.setLeader(server.index)
+					.setAppendedEntries(server.numEntries)
+					.build();
+
+			Raft.Response vote = stub.withDeadlineAfter(25, TimeUnit.MILLISECONDS).acceptEntry(voteReq);
+		}
 	}
 	
 	/**
