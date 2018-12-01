@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 import java.util.Scanner;
@@ -96,32 +97,63 @@ public class Client {
 		scan.close();
 	}
 
+	@SuppressWarnings("null")
 	private static void uploadFile(File f, List<ProxyInfo> proxyList, int maxChunks) throws IOException, InterruptedException {
 		int proxyNum = proxyList.size();
-
-		ArrayList<ManagedChannel> chList = new ArrayList<ManagedChannel>();
-		for(ProxyInfo pr: proxyList) {
-			chList.add(getChannel(pr.getIp() + pr.getPort()));
-		}
-
-		DataTransferServiceGrpc.DataTransferServiceStub asyncStub = DataTransferServiceGrpc.newStub(chList.get(0));
+		//TODO Alter the fixed seq size
 		int seqSize = 1024 * 1024; // 1MB
-		long seqMax = f.length()/seqSize;
-		byte[] buffer = new byte[seqSize];
-		// TODO Split file into Chunks
+		long totalSeq = f.length()/seqSize;
+		
+		/**
+		 *  Allocating the seqMax to each chunk
+		 */
+		
+		HashMap<Integer, Long> seqMap = new HashMap<Integer, Long>();
+		if(totalSeq % maxChunks == 0) {
+			for(int i=1; i <= maxChunks; i++) {
+				seqMap.put(i, totalSeq/maxChunks);
+			}
+		} else {
+			for(int i=1; i <= maxChunks-1; i++) {
+				seqMap.put(i, totalSeq/(maxChunks-1));
+			}
+			seqMap.put(maxChunks, totalSeq % maxChunks);
+		}
+		
+		/**
+		 *  Allocating chunks to each Proxy
+		 */
+		
+		HashMap<Integer, ProxyInfo> proxyMap = new HashMap<Integer, ProxyInfo>();
+		if(maxChunks % proxyNum  == 0) {
+			int allottedChunks = maxChunks/proxyNum, start = 1, pr = 0;
+			for(int i=1; i <= maxChunks; i++) {
+				if(i < start+allottedChunks) {
+					proxyMap.put(i, proxyList.get(pr));
+					if (start+allottedChunks-i == 1) {
+						start = i+1;
+						pr++;
+					}
+				}
+			}
+		} else {
+		    int allottedChunks = maxChunks/(proxyNum-1), start=1, pr=0;
+			for(int i=1; i <= maxChunks-1; i++) {
+				if(i < start+allottedChunks) {
+					proxyMap.put(i, proxyList.get(pr));
+					if (start+allottedChunks-i == 1) {
+						start = i+1;
+						pr++;
+					}
+				}
+			}
+			proxyMap.put(maxChunks, proxyList.get(pr));
+		}
+		
 
-		FileInputStream fis = new FileInputStream(f);
-		BufferedInputStream bis = new BufferedInputStream(fis);
-
-		int bytesAmount = 0, seqNum = 0;
-
-		ByteArrayOutputStream out = null;
-
-
-
-		StreamObserver<FileTransfer.FileInfo> responseObserver = new StreamObserver<FileTransfer.FileInfo>() {
+		StreamObserver<FileInfo> responseObserver = new StreamObserver<FileInfo>() {
 			@Override
-			public void onNext(FileTransfer.FileInfo fileInfo) {
+			public void onNext(FileInfo fileInfo) {
 
 			}
 
@@ -137,35 +169,43 @@ public class Client {
 
 			}
 		};
+		
+		byte[] buffer = new byte[seqSize];
 
+		FileInputStream fis = new FileInputStream(f);
+		@SuppressWarnings("resource")
+		BufferedInputStream bis = new BufferedInputStream(fis);
+
+		int bytesAmount = 0, seqNum = 0, chunkId = 1;
+
+		ByteArrayOutputStream out = null;
+
+		DataTransferServiceGrpc.DataTransferServiceStub asyncStub 
+		= DataTransferServiceGrpc.newStub(getChannel(proxyMap.get(chunkId).getIp() + ":" + proxyMap.get(chunkId).getPort()));
+		
 		StreamObserver<FileTransfer.FileUploadData> requestObserver = asyncStub.uploadFile(responseObserver);
 
 		while ((bytesAmount = bis.read(buffer)) > 0) {
+			long seqMax = seqMap.get(chunkId);
 			seqNum++;
 			out.write(buffer, 0, bytesAmount);	
 			byte[] contents = out.toByteArray();
 
 			FileUploadData uploadData = FileUploadData.newBuilder().setFileName(f.getName())
-					.setChunkId(seqNum).setMaxChunks(maxChunks)
+					.setChunkId(chunkId).setMaxChunks(maxChunks)
 					.setSeqNum(seqNum).setSeqMax(seqMax).setData(ByteString.copyFrom(contents)).build();
-
+			
+			if(seqNum == seqMax) {
+				seqNum = 0;
+				chunkId++;
+				asyncStub = DataTransferServiceGrpc.newStub(getChannel(proxyMap.get(chunkId).getIp() + ":" + proxyMap.get(chunkId).getPort()));
+				requestObserver = asyncStub.uploadFile(responseObserver);
+			}
 			requestObserver.onNext(uploadData);
 			Thread.sleep(new Random().nextInt(1000) + 500);
 		}
 
 		requestObserver.onCompleted();
-
-		//TODO Create stub per each channel
-		//		DataTransferServiceGrpc.DataTransferServiceStub ayncStub = DataTransferServiceGrpc.newStub(chList.get(1));
-	}
-
-	private static boolean checkFileUploadInfo(String line) {
-		// TODO Check each element of words
-		String [] words = line.split(",");
-		if(words.length != 3)
-			return false;
-		return true;
-
 	}
 
 	private static List <ProxyInfo> requestFileUpload(File f, long maxChunks) {
@@ -173,8 +213,6 @@ public class Client {
 
 		ManagedChannel ch = getChannel(getRandomAddress(ConfigUtil.raftNodes));
 		DataTransferServiceGrpc.DataTransferServiceBlockingStub blockingStub = DataTransferServiceGrpc.newBlockingStub(ch);
-
-		int chunkSize = 1024 * 1024;// 1MB
 
 		FileUploadInfo request = FileUploadInfo.newBuilder()
 				.setFileName(f.getName())
@@ -188,12 +226,11 @@ public class Client {
 	private static void showMenu() {
 		System.out.println("Select an option and press Enter: \n"
 				+ "1) List Files\n" 
-				+ "2) Read a particular file\n"
+				+ "2) Request File Info\n"
 				+ "3) Download File Chunk\n"
 				+ "4) Request File Upload\n"
 				+ "5) Upload File\n"
 				);
-
 	}
 
 	private static void downloadFile(String readFile) {
