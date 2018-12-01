@@ -165,7 +165,7 @@ public class DataTransferServiceImpl extends DataTransferServiceGrpc.DataTransfe
 		//If not found in own team
 		if(value == null) {
 			logger.log(Level.INFO, "Fetching Files from other teams..");
-			response = client.getFileFromOtherTeam(ConfigUtil.globalNodes, request);
+			response = client.getFileLocationFromOtherTeam(ConfigUtil.globalNodes, request);
 		}else {
 			maxChunks = value.split("\\$")[0];
 			activeProxies= getLiveProxies();
