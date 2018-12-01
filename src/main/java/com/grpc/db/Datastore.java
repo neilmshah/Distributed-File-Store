@@ -44,7 +44,7 @@ public class Datastore {
         server.awaitTermination();
     }
 
-    public static void main(){
+    public static void main(String[] args){
         Datastore myDs = new Datastore();
         myDs.start();
         try {
