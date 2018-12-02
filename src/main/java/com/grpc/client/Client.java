@@ -7,6 +7,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -14,7 +15,10 @@ import java.util.List;
 import java.util.Random;
 import java.util.Scanner;
 
+import org.apache.log4j.Logger;
+
 import com.google.protobuf.ByteString;
+import com.grpc.proxy.ProxyDataTransferServiceImpl;
 import com.util.ConfigUtil;
 import com.util.Connection;
 
@@ -41,9 +45,11 @@ import grpc.DataTransferServiceGrpc.DataTransferServiceStub;
 
 public class Client {
 
+	final static Logger logger = Logger.getLogger(ProxyDataTransferServiceImpl.class);
 	private static ManagedChannel getChannel(String address) {
+		System.out.println("address: " + address);
 		return ManagedChannelBuilder.forTarget(address)
-				.usePlaintext(true)
+				.usePlaintext()
 				.build();
 	}
 
@@ -92,7 +98,7 @@ public class Client {
 
 	@SuppressWarnings("null")
 	private static void uploadFile(File f, int maxChunks) throws IOException, InterruptedException {
-		
+		Timestamp ts1  =  new Timestamp(System.currentTimeMillis());
 		List<ProxyInfo> proxyList = requestFileUpload(f, maxChunks);
 		int proxyNum = proxyList.size();
 		//TODO Alter the fixed seq size
@@ -227,6 +233,10 @@ public class Client {
 				((ManagedChannel) stubMap.get(chunkId).getChannel()).shutdown();
 			}
 		}
+		
+		Timestamp ts2  =  new Timestamp(System.currentTimeMillis());
+		logger.debug("Method uploadFile ended at "+ ts2);
+		logger.debug("Method uploadFile execution time : "+ (ts2.getTime() - ts1.getTime()) + "ms");
 	}
 
 	private static List <ProxyInfo> requestFileUpload(File f, long maxChunks) {
@@ -255,12 +265,20 @@ public class Client {
 	private static void downloadFile(String fileName, OutputStream out) throws IOException {
 		// TODO Auto-generated method stub
 		System.out.println("downloadFile called with" + fileName);
-		FileLocationInfo fileDetails = requestFileInfo(fileName);
+//		FileLocationInfo fileDetails = requestFileInfo(fileName);
 		
-		List<ProxyInfo> readProxies = fileDetails.getLstProxyList();
+//		List<ProxyInfo> readProxies = fileDetails.getLstProxyList();
+		List<ProxyInfo>  readProxies = new ArrayList<ProxyInfo>();
+		ProxyInfo p = ProxyInfo.newBuilder().setIp("10:0.20.1").setPort("3000").build();
+		readProxies.add(p);
+		ProxyInfo p1 = ProxyInfo.newBuilder().setIp("10:0.20.2").setPort("3000").build();
+		readProxies.add(p1);
+		ProxyInfo p2 = ProxyInfo.newBuilder().setIp("10:0.20.3").setPort("3000").build();
+		readProxies.add(p2);
 		int proxyNum = readProxies.size();
-		long maxChunks = fileDetails.getMaxChunks();
+//		long maxChunks = fileDetails.getMaxChunks();
 		
+		long maxChunks =2;
 		for(int i=1; i <= maxChunks; i++) {
 			ProxyInfo proxy = readProxies.get((i-1) % proxyNum);
 			
@@ -270,8 +288,8 @@ public class Client {
 				= DataTransferServiceGrpc.newStub(channel);
 			
 			ChunkInfo downloadRequest = ChunkInfo.newBuilder()
-					.setFileName(fileDetails.getFileName()).setChunkId(i).setStartSeqNum(1).build();
-			
+//					.setFileName(fileDetails.getFileName()).setChunkId(i).setStartSeqNum(1).build();
+					.setFileName(fileName).setChunkId(i).setStartSeqNum(1).build();
 			asyncStub.downloadChunk(downloadRequest, new StreamObserver<FileMetaData>() {
 
 				@Override

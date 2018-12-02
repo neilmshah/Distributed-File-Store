@@ -38,10 +38,12 @@ public class DBTransferServiceImpl extends DataTransferServiceGrpc.DataTransferS
 			byte[] bytes;
 			String key; 
 			String filename;
+			long chunkId;
 
 			@Override
 			public void onNext(FileUploadData value) {
 				filename = value.getFileName();
+				chunkId = value.getChunkId();
 				bytes = value.getFileNameBytes().toByteArray();
 				key = value.getFileName()+KEY_DELIMINATOR+value.getChunkId()+KEY_DELIMINATOR+value.getSeqNum();
 				
@@ -61,7 +63,7 @@ public class DBTransferServiceImpl extends DataTransferServiceGrpc.DataTransferS
 				responseObserver.onNext(FileInfo.newBuilder()
 						.setFileName(filename)
 						.build());
-				logger.error("File "+ filename +"Uploaded successfully to the DB hashmap ");
+				logger.error("File "+ filename + chunkId  + " ploaded successfully to the DB hashmap ");
 				responseObserver.onCompleted();
 			}
 
