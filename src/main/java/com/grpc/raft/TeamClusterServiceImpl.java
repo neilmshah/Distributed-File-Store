@@ -27,10 +27,12 @@ import io.grpc.stub.StreamObserver;
  */
 public class TeamClusterServiceImpl extends TeamClusterServiceGrpc.TeamClusterServiceImplBase{
 
+	private final static Logger logger = Logger.getLogger(TeamClusterServiceImpl.class);
 	private final String KEY_DELIMINATOR= "#";
+	private final static int POLL_DEADLINE = 300; //how long until polling other nodes times out. timeout = rejected vote
+
 	private RaftServer server;
-	final static Logger logger = Logger.getLogger(TeamClusterServiceImpl.class);
-	
+
 	public TeamClusterServiceImpl(){
 		super();
 	}
@@ -73,7 +75,7 @@ public class TeamClusterServiceImpl extends TeamClusterServiceGrpc.TeamClusterSe
 		logger.debug("UpdateChunkLocations started.. ");
 		String key = request.getFileName()+KEY_DELIMINATOR+ request.getChunkId()+KEY_DELIMINATOR+request.getMessageId();
 		String value = server.data.get(key);
-		logger.debug("Value stored in hashmap for key "+key+": "+value);
+		logger.debug("Value presently stored in hashmap for key "+key+": "+value);
 		
 		//MaxChunks$IP1,IP2,IP3
 		// If file is getting uploaded for the first time.
@@ -88,7 +90,7 @@ public class TeamClusterServiceImpl extends TeamClusterServiceGrpc.TeamClusterSe
 			value = builder.toString();
 			value = value.substring(0, value.length() - 1);
 			//server.data.put(key, value);
-			logger.debug("Put key in server! "+server.data.get(key));
+			logger.debug("Value to store in server: "+value);
 		}else {
 			//If key is already there, only update the db addresses.
 			String[] valArr = value.split("\\$");
@@ -151,10 +153,23 @@ public class TeamClusterServiceImpl extends TeamClusterServiceGrpc.TeamClusterSe
 					.setAppendedEntries(server.numEntries)
 					.build();
 
-		//	Raft.Response vote = stub.withDeadlineAfter(25, TimeUnit.MILLISECONDS).pollEntry(voteReq);
-			/*if(vote.getAccept())
+			boolean acceptChange = true;
+			Raft.Response vote = null;
+			try {
+				vote = stub.withDeadlineAfter(POLL_DEADLINE, TimeUnit.MILLISECONDS).pollEntry(voteReq);
+			}catch (io.grpc.StatusRuntimeException e){
+				logger.debug("Deadline for vote response has passed, vote rejected.");
+			}
+			if(vote == null || !vote.getAccept())
+				acceptChange = false;
+
+			if(acceptChange) {
 				accepts++;
-*/
+				logger.debug("Accepted vote from "+i);
+			}else{
+				logger.debug("Rejected vote from "+i);
+			}
+
 			//Check if no point continuing to vote
 			if(accepts > ConfigUtil.raftNodes.size()/2)
 				return true;
