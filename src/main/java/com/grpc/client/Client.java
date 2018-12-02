@@ -1,35 +1,31 @@
 package com.grpc.client;
 
-import java.io.File;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.Scanner;
 
-
+import com.google.protobuf.ByteString;
 import com.util.ConfigUtil;
 import com.util.Connection;
 
 import grpc.DataTransferServiceGrpc;
-import grpc.FileTransfer.FileInfo;
-import grpc.FileTransfer.FileList;
-import grpc.FileTransfer.FileLocationInfo;
-
-import com.google.protobuf.ByteString;
-
-import grpc.DataTransferServiceGrpc;
 import grpc.FileTransfer;
+import grpc.FileTransfer.ChunkInfo;
 import grpc.FileTransfer.FileInfo;
 import grpc.FileTransfer.FileList;
 import grpc.FileTransfer.FileLocationInfo;
+import grpc.FileTransfer.FileMetaData;
 import grpc.FileTransfer.FileUploadData;
-
 import grpc.FileTransfer.FileUploadInfo;
 import grpc.FileTransfer.ProxyInfo;
 import grpc.FileTransfer.RequestFileList;
@@ -50,10 +46,11 @@ public class Client {
 		new ConfigUtil();
 		Scanner scan = new Scanner(System.in);
 		showMenu();
-		String readFile = "";
-		List<ProxyInfo> proxyList = new ArrayList<ProxyInfo>();
+		String fileName = "";
+		List<ProxyInfo> writeProxies = new ArrayList<ProxyInfo>();
+		List<ProxyInfo> readProxies = new ArrayList<ProxyInfo>();
 		File f = null;
-
+		int maxChunks = 0;
 		while(scan.hasNext()) {
 			String s1 = scan.nextLine();
 			if(s1.equals("Over")) {
@@ -68,28 +65,32 @@ public class Client {
 				break;
 			case "2":
 				System.out.println("Enter the File Name: \n");
-				readFile = scan.nextLine();
-				requestFileInfo(readFile);
+				fileName = scan.nextLine();
+//				readProxies = requestFileInfo(fileName);
 				System.out.println("Press 3 to download file. \n");
 				break;
 			case "3":
-				if(readFile != "") {
-					downloadFile(readFile);
+				if(fileName != "") {
+					downloadFile(fileName, readProxies);
 				} else {
 					System.out.println("Press 1 to select a file. \n");
 				}
-				readFile = "";
+				fileName = "";
+				readProxies.clear();
 				break;
 			case "4":
-				System.out.println("Enter File Path");
+				System.out.println("Enter File Path: ");
 				f = new File(scan.nextLine());
-				proxyList = requestFileUpload(f, 10);
-				break;
-			case "5":
-				uploadFile(f, proxyList, 10);
+				System.out.println("Enter maximum chunks: ");
+				maxChunks = scan.nextInt();
+				scan.nextLine();
+				uploadFile(f, maxChunks);
+				writeProxies.clear();
+				maxChunks = 0;
+				f = null;
 				break;
 			default:
-				System.out.println("Invalid option. Press 0 to see Menu\n");
+				System.out.println("Invalid option. Press 0 to see Menu.");
 				break;
 			}
 
@@ -98,7 +99,9 @@ public class Client {
 	}
 
 	@SuppressWarnings("null")
-	private static void uploadFile(File f, List<ProxyInfo> proxyList, int maxChunks) throws IOException, InterruptedException {
+	private static void uploadFile(File f, int maxChunks) throws IOException, InterruptedException {
+		
+		List<ProxyInfo> proxyList = requestFileUpload(f, maxChunks);
 		int proxyNum = proxyList.size();
 		//TODO Alter the fixed seq size
 		int seqSize = 1024 * 1024; // 1MB
@@ -107,7 +110,6 @@ public class Client {
 		/**
 		 *  Allocating the seqMax to each chunk
 		 */
-		
 		HashMap<Integer, Long> seqMap = new HashMap<Integer, Long>();
 		if(totalSeq % maxChunks == 0) {
 			for(int i=1; i <= maxChunks; i++) {
@@ -123,7 +125,6 @@ public class Client {
 		/**
 		 *  Allocating chunks to each Proxy
 		 */
-		
 		HashMap<Integer, ProxyInfo> proxyMap = new HashMap<Integer, ProxyInfo>();
 		if(maxChunks % proxyNum  == 0) {
 			int allottedChunks = maxChunks/proxyNum, start = 1, pr = 0;
@@ -233,25 +234,56 @@ public class Client {
 				);
 	}
 
-	private static void downloadFile(String readFile) {
+	private static void downloadFile(String fileName, List<ProxyInfo> readProxies) throws IOException {
 		// TODO Auto-generated method stub
-		System.out.println("downloadFile called with" + readFile);
+		System.out.println("downloadFile called with" + fileName);
+//		FileLocationInfo fileDetails = requestFileInfo(fileName);
+//		
+//		readProxies = fileDetails.getLstProxyList();
+//		int proxyNum = readProxies.size();
+//		long maxChunks = fileDetails.getMaxChunks();
+//		
+//		HashMap<Integer, ProxyInfo> proxyMap = new HashMap<Integer, ProxyInfo>();
+//		for(int i=1; i <= maxChunks; i++) {
+//			ProxyInfo proxy = readProxies.get((i-1) % proxyNum);
+//			
+//			DataTransferServiceGrpc.DataTransferServiceBlockingStub blockingStub 
+//				= DataTransferServiceGrpc.newBlockingStub(getChannel(proxy.getIp() + ":" + proxy.getPort()));
+//			
+//			ChunkInfo downloadRequest = ChunkInfo.newBuilder()
+//					.setFileName(fileDetails.getFileName()).setChunkId(i).setStartSeqNum(1).build();
+//			
+//			Iterator<FileMetaData> fileData; 
+//			OutputStream out = new FileOutputStream(fileName);
+//			fileData = blockingStub.downloadChunk(downloadRequest);
+//			long initChunk = fileData.next().getChunkId();
+//			while(fileData.hasNext()) {
+//				FileMetaData dataObj = fileData.next();
+//				if(initChunk == dataObj.getChunkId()) {
+//					if(dataObj.getSeqNum() <= dataObj.getSeqMax()) {
+//						byte [] data = dataObj.getData().toByteArray();
+//						out.write(data);
+//					}
+//				}
+//			}
+//		}
+//		
+//		
+//		
 
 	}
 
-	private static void requestFileInfo(String fileName) {
+	private static FileLocationInfo requestFileInfo(String fileName) {
 		// TODO Auto-generated method stub
 		System.out.println("requestFileInfo called with " + fileName);
 
 		//TODO Update RAFT Node address
 		ManagedChannel channel = getChannel(getRandomAddress(ConfigUtil.raftNodes));
 		DataTransferServiceGrpc.DataTransferServiceBlockingStub blockingStub = DataTransferServiceGrpc.newBlockingStub(channel);
-
 		FileInfo request = FileInfo.newBuilder().setFileName(fileName).build();
-
 		FileLocationInfo fileLocations = blockingStub.requestFileInfo(request);
-
 		System.out.println("Locations: \n" + fileLocations.getLstProxyList());
+		return fileLocations;
 	}
 
 	private static void listFiles() {
@@ -270,7 +302,7 @@ public class Client {
 
 	private static String getRandomAddress(List<Connection> nodes) {
 		//int index = new Random().nextInt(nodes.size()); ucomment in final demo
-		int index = new Random().nextInt(0);
+		int index = new Random().nextInt(1);
 		return nodes.get(index).getIP()+":"+ nodes.get(index).getPort();
 	}
 
