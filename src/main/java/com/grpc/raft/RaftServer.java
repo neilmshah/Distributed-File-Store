@@ -18,6 +18,7 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
+import io.netty.util.internal.logging.Log4J2LoggerFactory;
 
 import javax.annotation.Nullable;
 
@@ -80,8 +81,7 @@ public class RaftServer {
 	}
 
     public static void main( String[] args ) {
-		Logger log = Logger.getLogger("io.grpc");
-		log.setLevel(Level.WARNING);
+		Logger.getLogger("io.grpc").setLevel(Level.SEVERE);
 		new ConfigUtil();
 
 		System.out.println("Hello Raft!");

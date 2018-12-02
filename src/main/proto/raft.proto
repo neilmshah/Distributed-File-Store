@@ -47,4 +47,8 @@ service RaftService{
     //Vote yes if no candidate yet and candidate has >= term and >= appendedEntries
     //Vote no otherwise
     rpc RequestVote(VoteRequest) returns (Response);
+
+    rpc PollEntry(EntryAppend) returns (Response);
+
+    rpc AcceptEntry(EntryAppend) returns (Response);
 }
