@@ -42,7 +42,7 @@ public class DBTransferServiceImpl extends DataTransferServiceGrpc.DataTransferS
 			public void onNext(FileUploadData value) {
 				filename = value.getFileName();
 				bytes = value.getFileNameBytes().toByteArray();
-				key = value.getFileName()+KEY_DELIMINATOR+value.getChunkId();
+				key = value.getFileName()+KEY_DELIMINATOR+value.getChunkId()+KEY_DELIMINATOR+value.getSeqNum();
 				db.put(key, bytes);
 			}
 

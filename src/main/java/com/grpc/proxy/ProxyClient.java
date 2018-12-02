@@ -61,7 +61,7 @@ public class ProxyClient {
 
 			public void onError(Throwable t) {
 				t.printStackTrace();
-				logger.debug("Upload File Chunk failed:");
+				logger.debug("Upload File Chunk failed:" + t.getMessage() + "at " + dbNode.getIP());
 			}
 
 			public void onCompleted() {
@@ -156,6 +156,7 @@ public class ProxyClient {
 										.addAllDbAddresses(dbNodesAsString)
 										.setFileName(value.getFileName())
 										.setMaxChunks(value.getMaxChunks())
+										.setMessageId(value.getSeqMax())
 										.build();
 
 	    Team.Ack response = blockingStub.updateChunkLocations(request);

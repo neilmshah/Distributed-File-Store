@@ -71,7 +71,7 @@ public class TeamClusterServiceImpl extends TeamClusterServiceGrpc.TeamClusterSe
 		}
 
 		logger.debug("UpdateChunkLocations started.. ");
-		String key = request.getFileName()+KEY_DELIMINATOR+ request.getChunkId();
+		String key = request.getFileName()+KEY_DELIMINATOR+ request.getChunkId()+KEY_DELIMINATOR+request.getMessageId();
 		String value = server.data.get(key);
 		logger.debug("Value stored in hashmap for key "+key+": "+value);
 		
@@ -196,7 +196,7 @@ public class TeamClusterServiceImpl extends TeamClusterServiceGrpc.TeamClusterSe
 	@Override
 	public void getChunkLocations(grpc.Team.FileData request,
 		        io.grpc.stub.StreamObserver<grpc.Team.ChunkLocations> responseObserver) {
-		String key = request.getFileName()+KEY_DELIMINATOR+ request.getChunkId();
+		String key = request.getFileName()+KEY_DELIMINATOR+ request.getChunkId()+KEY_DELIMINATOR+request.getMessageId();
 		String value = server.data.get(key);
 
 		String[] valArr = value.split("\\$");
