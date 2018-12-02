@@ -28,7 +28,7 @@ public class ProxyDataTransferServiceImpl extends DataTransferServiceGrpc.DataTr
 	ProxyClient proxyClient = new ProxyClient();
 	Connection ownDB = ConfigUtil.databaseNodes.get(1);
 	final static Logger logger = Logger.getLogger(ProxyDataTransferServiceImpl.class);
-	
+	   
 	/**
 	 * Upload chunks from Client to Proxy
 	 * This method calls the db node to upload File chunk

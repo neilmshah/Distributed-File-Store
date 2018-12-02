@@ -80,7 +80,7 @@ public class DBTransferServiceImpl extends DataTransferServiceGrpc.DataTransferS
 		
 		for (Entry<String, FileData> entry : db.entrySet()) {
 	        if (entry.getKey().startsWith(request.getFileName())) {
-	        	
+	        	  
 	        	 responseObserver.onNext(
 	    				 FileMetaData.newBuilder()
 	    					.setFileName(request.getFileName())
