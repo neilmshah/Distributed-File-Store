@@ -1,15 +1,16 @@
 package com.grpc.db;
 
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.log4j.Logger;
 
-import com.grpc.proxy.TestDBDataTransferServiceImpl;
-import com.grpc.raft.RaftServer;
+import com.google.protobuf.ByteString;
 
 import grpc.DataTransferServiceGrpc;
 import grpc.FileTransfer;
 import grpc.FileTransfer.FileInfo;
+import grpc.FileTransfer.FileMetaData;
 import grpc.FileTransfer.FileUploadData;
 import io.grpc.stub.StreamObserver;
 
@@ -20,12 +21,12 @@ import io.grpc.stub.StreamObserver;
  */
 public class DBTransferServiceImpl extends DataTransferServiceGrpc.DataTransferServiceImplBase {
 
-	private ConcurrentHashMap<String , byte[]> db;
+	private ConcurrentHashMap<String, FileData> db;
 	private final String KEY_DELIMINATOR= "#";
 	
 	public DBTransferServiceImpl(ConcurrentHashMap<String , byte[]> map){
 		super();
-		db= new ConcurrentHashMap<String , byte[]>();
+		db= new ConcurrentHashMap<String , FileData>();
 	}
 
 	final static Logger logger = Logger.getLogger(DBTransferServiceImpl.class);
@@ -43,7 +44,8 @@ public class DBTransferServiceImpl extends DataTransferServiceGrpc.DataTransferS
 				filename = value.getFileName();
 				bytes = value.getFileNameBytes().toByteArray();
 				key = value.getFileName()+KEY_DELIMINATOR+value.getChunkId()+KEY_DELIMINATOR+value.getSeqNum();
-				db.put(key, bytes);
+				
+				db.put(key, new FileData(value.getSeqMax(), value.getData().toByteArray()));
 			}
 
 			@Override
@@ -64,6 +66,38 @@ public class DBTransferServiceImpl extends DataTransferServiceGrpc.DataTransferS
 			}
 
 		};
+	}
+	
+	/**
+	 *  Download chunks from Client to Proxy
+	 *  
+	 * 	rpc DownloadChunk (ChunkInfo) returns (stream FileMetaData);
+	 * 
+	 */
+	@Override
+	public void downloadChunk(grpc.FileTransfer.ChunkInfo request, io.grpc.stub.StreamObserver<grpc.FileTransfer.FileMetaData> responseObserver) {
+		
+		
+		for (Entry<String, FileData> entry : db.entrySet()) {
+	        if (entry.getKey().startsWith(request.getFileName())) {
+	        	
+	        	 responseObserver.onNext(
+	    				 FileMetaData.newBuilder()
+	    					.setFileName(request.getFileName())
+	    					.setChunkId(request.getChunkId())
+	    					.setSeqNum(request.getStartSeqNum())
+	    					.setData(ByteString.copyFrom(entry.getValue().getData()))
+	    					.setSeqMax(entry.getValue().getSeqMax())
+	    					.build()
+	    		);
+	        	
+	        }
+	    }
+		
+		
+		 responseObserver.onCompleted();
+		
+	
 	}
 
 
