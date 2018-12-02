@@ -37,7 +37,7 @@ public class TestRaftConnectionClass {
 		System.out.println(stub.updateChunkLocations(request).getIsAck());
 		//channel.shutdown();
 
-		channel = ManagedChannelBuilder.forTarget("localhost:8700").usePlaintext(true).build();
+		channel = ManagedChannelBuilder.forTarget("localhost:10000").usePlaintext(true).build();
 		stub = TeamClusterServiceGrpc.newBlockingStub(channel);
 		Team.FileData req2 = Team.FileData.newBuilder()
 				.setFileName("poop.jpg")
