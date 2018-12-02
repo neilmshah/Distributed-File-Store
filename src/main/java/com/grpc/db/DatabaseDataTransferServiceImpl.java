@@ -43,7 +43,7 @@ public class DatabaseDataTransferServiceImpl extends DataTransferServiceGrpc.Dat
 	                // form a chunk
 	                if(lastSeqNum == 0) {
 	                    filename = fileUploadData.getFileName();
-	                    chunkId = fileUploadData.getChunkId();
+	                    chunkId = fileUploadData.getChunkId ();
 	                    seqMax = fileUploadData.getSeqMax();
 	                    maxChunks = fileUploadData.getMaxChunks();
 	                }
@@ -60,12 +60,12 @@ public class DatabaseDataTransferServiceImpl extends DataTransferServiceGrpc.Dat
 	            @Override
 	            public void onCompleted() {
 	                //create an entry in the table
-	                Metadata newEntry = new Metadata(chunkId, maxChunks, true, "./data/", accumulator.size());
+	                Metadata newEntry = new Metadata(chunkId, maxChunks, true, "C:\\data\\SJSU2ndSem\\Gash275\\cmpe275\\test\\", accumulator.size());
 	                String filename_chunkId = filename+KEY_DELIMINATOR+chunkId;
 	                fileMap.put(filename+KEY_DELIMINATOR+chunkId,newEntry);
 	                //get the data and write it to disk
 	                try{
-	                    File file = new File("./data/"+filename_chunkId);
+	                    File file = new File("C:\\data\\SJSU2ndSem\\Gash275\\cmpe275\\test\\"+filename_chunkId);
 	                    OutputStream is = new FileOutputStream(file);
 	                    //flush file to disk
 	                    is.write(accumulator.toByteArray());

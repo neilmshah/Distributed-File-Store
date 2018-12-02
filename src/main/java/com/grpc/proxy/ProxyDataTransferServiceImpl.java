@@ -26,7 +26,7 @@ import io.grpc.stub.StreamObserver;
 public class ProxyDataTransferServiceImpl extends DataTransferServiceGrpc.DataTransferServiceImplBase {
 
 	ProxyClient proxyClient = new ProxyClient();
-
+	Connection ownDB = ConfigUtil.databaseNodes.get(1);
 	final static Logger logger = Logger.getLogger(ProxyDataTransferServiceImpl.class);
 	
 	/**
@@ -47,9 +47,9 @@ public class ProxyDataTransferServiceImpl extends DataTransferServiceGrpc.DataTr
 			public void onNext(FileUploadData value) {
 				successFullDbNnodes = new ArrayList<Connection>();
 				fileName = value.getFileName();
-				for(Connection dbNode : ConfigUtil.databaseNodes ) {
-					proxyClient.uploadDataToDB(value, dbNode, successFullDbNnodes);
-				}
+				//for(Connection dbNode : ConfigUtil.databaseNodes ) {
+				proxyClient.uploadDataToDB(value, ownDB, successFullDbNnodes);
+				//}
 				proxyClient.updateChunkLocations(successFullDbNnodes, ConfigUtil.raftNodes.get(0), value);
 			}
 
