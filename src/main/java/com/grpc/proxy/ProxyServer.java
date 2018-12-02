@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import org.apache.log4j.Logger;
 
+import com.grpc.raft.TeamClusterServiceImpl;
 import com.util.ConfigUtil;
 
 import io.grpc.Server;
@@ -19,6 +20,7 @@ public class ProxyServer {
 		   new ConfigUtil();
 	        Server server = ServerBuilder.forPort(3000)
 	          .addService(new ProxyDataTransferServiceImpl())
+	          .addService(new TeamClusterServiceImpl())
 	          .build();
 
 

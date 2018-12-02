@@ -16,6 +16,7 @@ import org.apache.log4j.Logger;
 
 import grpc.Team;
 import grpc.TeamClusterServiceGrpc;
+import grpc.Team.Ack;
 import grpc.Team.ChunkLocations;
 import io.grpc.stub.StreamObserver;
 
@@ -29,10 +30,24 @@ public class TeamClusterServiceImpl extends TeamClusterServiceGrpc.TeamClusterSe
 	private final String KEY_DELIMINATOR= "#";
 	private RaftServer server;
 	final static Logger logger = Logger.getLogger(TeamClusterServiceImpl.class);
-
+	
+	public TeamClusterServiceImpl(){
+		super();
+	}
+	
 	public TeamClusterServiceImpl(RaftServer serv){
 		super();
 		server = serv;
+	}
+	
+	
+	@Override
+	public void heartbeat(Ack request, StreamObserver<Ack> responseObserver) {
+		
+		Team.Ack  response = Team.Ack.newBuilder().setIsAck(true).setMessageId(request.getMessageId()).build();
+	    responseObserver.onNext(response);
+	    responseObserver.onCompleted();
+		
 	}
 
 	/**
@@ -45,7 +60,6 @@ public class TeamClusterServiceImpl extends TeamClusterServiceGrpc.TeamClusterSe
 
 		//Forward command to leader and return that
 		if(server.raftState != 2) {
-			logger.debug("This is not the leader, forwarding message to leader!");
 			Connection con = ConfigUtil.raftNodes.get((int) server.currentLeaderIndex);
 			ManagedChannel channel = ManagedChannelBuilder
 					.forTarget(con.getIP() + ":" + con.getPort()).usePlaintext(true).build();
@@ -101,7 +115,6 @@ public class TeamClusterServiceImpl extends TeamClusterServiceGrpc.TeamClusterSe
 
 		// Use responseObserver to send a single response back
 		responseObserver.onNext(response);
-		server.data.put(key, value);
 
 		logger.debug("UpdateChunkLocations ended.. ");
 		responseObserver.onCompleted();
@@ -132,10 +145,10 @@ public class TeamClusterServiceImpl extends TeamClusterServiceGrpc.TeamClusterSe
 					.setAppendedEntries(server.numEntries)
 					.build();
 
-			Raft.Response vote = stub.withDeadlineAfter(25, TimeUnit.MILLISECONDS).pollEntry(voteReq);
-			if(vote.getAccept())
+		//	Raft.Response vote = stub.withDeadlineAfter(25, TimeUnit.MILLISECONDS).pollEntry(voteReq);
+			/*if(vote.getAccept())
 				accepts++;
-
+*/
 			//Check if no point continuing to vote
 			if(accepts > ConfigUtil.raftNodes.size()/2)
 				return true;
@@ -168,7 +181,7 @@ public class TeamClusterServiceImpl extends TeamClusterServiceGrpc.TeamClusterSe
 					.setAppendedEntries(server.numEntries)
 					.build();
 
-			Raft.Response vote = stub.withDeadlineAfter(25, TimeUnit.MILLISECONDS).acceptEntry(voteReq);
+			//Raft.Response vote = stub.withDeadlineAfter(25, TimeUnit.MILLISECONDS).acceptEntry(voteReq);
 		}
 	}
 	
