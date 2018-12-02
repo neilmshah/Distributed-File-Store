@@ -20,7 +20,7 @@ public class TestRaftConnectionClass {
 
 	public static void main(String [] args){
 		ManagedChannel channel = ManagedChannelBuilder
-				.forTarget("localhost:8700").usePlaintext(true).build();
+				.forTarget("localhost:10000").usePlaintext(true).build();
 		TeamClusterServiceGrpc.TeamClusterServiceBlockingStub stub =
 				TeamClusterServiceGrpc.newBlockingStub(channel);
 

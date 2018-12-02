@@ -27,6 +27,7 @@ public class RaftServiceImpl extends RaftServiceGrpc.RaftServiceImplBase{
 	@Override
 	public void appendEntries(Raft.EntryAppend request,
 							  StreamObserver<Raft.Response> responseObserver){
+		System.out.println("heartbeat from "+request.getLeader()+"; term "+request.getTerm()+" vs "+server.term);
 		//If this term > sent term
 		if(server.term > request.getTerm()){
 			Raft.Response response = Raft.Response.newBuilder()
@@ -161,6 +162,13 @@ public class RaftServiceImpl extends RaftServiceGrpc.RaftServiceImplBase{
 			System.out.println("Not running, voting for "+request.getMyindex());
 			response = Raft.Response.newBuilder()
 					.setAccept(true)
+					.setRequireUpdate(false)
+					.build();
+			server.hasVoted = true;
+		}else{
+			System.out.println("Already voted, voting against "+request.getMyindex());
+			response = Raft.Response.newBuilder()
+					.setAccept(false)
 					.setRequireUpdate(false)
 					.build();
 		}
