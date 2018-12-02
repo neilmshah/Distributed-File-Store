@@ -93,19 +93,11 @@ public class Client {
 		int seqSize = 1024 * 1024; // 1MB
 		long totalSeq = f.length()/seqSize;
 		
-		/**
-		 *  Allocating the seqMax to each chunk
-		 */
-		HashMap<Integer, Long> seqMap = new HashMap<Integer, Long>();
+		int seqMax;
 		if(totalSeq % maxChunks == 0) {
-			for(int i=1; i <= maxChunks; i++) {
-				seqMap.put(i, totalSeq/maxChunks);
-			}
+			seqMax = (int) (totalSeq/maxChunks);
 		} else {
-			for(int i=1; i <= maxChunks-1; i++) {
-				seqMap.put(i, totalSeq/(maxChunks-1));
-			}
-			seqMap.put(maxChunks, totalSeq % maxChunks);
+			seqMax = (int) (totalSeq/(maxChunks-1));
 		}
 		
 		/**
@@ -153,7 +145,6 @@ public class Client {
 			@Override
 			public void onCompleted() {
 				System.out.println("On completed");
-
 			}
 		};
 		
@@ -165,16 +156,15 @@ public class Client {
 
 		int bytesAmount = 0, seqNum = 0, chunkId = 1;
 
-		ByteArrayOutputStream out = null;
-
-		ManagedChannel channel = getChannel(proxyMap.get(chunkId).getIp() + ":" + proxyMap.get(chunkId).getPort());
-		DataTransferServiceGrpc.DataTransferServiceStub asyncStub 
-		= DataTransferServiceGrpc.newStub(channel);
-		
-		StreamObserver<FileTransfer.FileUploadData> requestObserver = asyncStub.uploadFile(responseObserver);
-
 		while ((bytesAmount = bis.read(buffer)) > 0) {
-			long seqMax = seqMap.get(chunkId);
+			
+			ManagedChannel channel = getChannel(proxyMap.get(chunkId).getIp() + ":" + proxyMap.get(chunkId).getPort());
+			
+			DataTransferServiceGrpc.DataTransferServiceStub asyncStub 
+			= DataTransferServiceGrpc.newStub(channel);
+			
+			StreamObserver<FileTransfer.FileUploadData> requestObserver = asyncStub.uploadFile(responseObserver);
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
 			seqNum++;
 			out.write(buffer, 0, bytesAmount);	
 			byte[] contents = out.toByteArray();
@@ -183,18 +173,19 @@ public class Client {
 					.setChunkId(chunkId).setMaxChunks(maxChunks)
 					.setSeqNum(seqNum).setSeqMax(seqMax).setData(ByteString.copyFrom(contents)).build();
 			
-			if(seqNum == seqMax) {
-				seqNum = 0;
-				chunkId++;
-				asyncStub = DataTransferServiceGrpc.newStub(getChannel(proxyMap.get(chunkId).getIp() + ":" + proxyMap.get(chunkId).getPort()));
-				requestObserver = asyncStub.uploadFile(responseObserver);
-			}
 			requestObserver.onNext(uploadData);
 			Thread.sleep(new Random().nextInt(1000) + 500);
+			
+			if(seqNum == seqMax && chunkId < maxChunks) {
+				requestObserver.onCompleted();
+				channel.shutdown();
+				seqNum = 0;
+				chunkId++;
+			} else if(seqNum == (totalSeq % (maxChunks-1)) && chunkId == maxChunks){
+				requestObserver.onCompleted();
+				channel.shutdown();
+			}
 		}
-
-		requestObserver.onCompleted();
-		channel.shutdown();
 	}
 
 	private static List <ProxyInfo> requestFileUpload(File f, long maxChunks) {
