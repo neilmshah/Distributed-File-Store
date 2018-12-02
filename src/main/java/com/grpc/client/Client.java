@@ -47,8 +47,6 @@ public class Client {
 		Scanner scan = new Scanner(System.in);
 		showMenu();
 		String fileName = "";
-		List<ProxyInfo> writeProxies = new ArrayList<ProxyInfo>();
-		List<ProxyInfo> readProxies = new ArrayList<ProxyInfo>();
 		File f = null;
 		int maxChunks = 0;
 		while(scan.hasNext()) {
@@ -66,28 +64,16 @@ public class Client {
 			case "2":
 				System.out.println("Enter the File Name: \n");
 				fileName = scan.nextLine();
-//				readProxies = requestFileInfo(fileName);
-				System.out.println("Press 3 to download file. \n");
+				OutputStream out = new FileOutputStream(fileName);
+				downloadFile(fileName, out);
 				break;
 			case "3":
-				if(fileName != "") {
-					downloadFile(fileName, readProxies);
-				} else {
-					System.out.println("Press 1 to select a file. \n");
-				}
-				fileName = "";
-				readProxies.clear();
-				break;
-			case "4":
 				System.out.println("Enter File Path: ");
 				f = new File(scan.nextLine());
 				System.out.println("Enter maximum chunks: ");
 				maxChunks = scan.nextInt();
 				scan.nextLine();
 				uploadFile(f, maxChunks);
-				writeProxies.clear();
-				maxChunks = 0;
-				f = null;
 				break;
 			default:
 				System.out.println("Invalid option. Press 0 to see Menu.");
@@ -181,8 +167,9 @@ public class Client {
 
 		ByteArrayOutputStream out = null;
 
+		ManagedChannel channel = getChannel(proxyMap.get(chunkId).getIp() + ":" + proxyMap.get(chunkId).getPort());
 		DataTransferServiceGrpc.DataTransferServiceStub asyncStub 
-		= DataTransferServiceGrpc.newStub(getChannel(proxyMap.get(chunkId).getIp() + ":" + proxyMap.get(chunkId).getPort()));
+		= DataTransferServiceGrpc.newStub(channel);
 		
 		StreamObserver<FileTransfer.FileUploadData> requestObserver = asyncStub.uploadFile(responseObserver);
 
@@ -207,6 +194,7 @@ public class Client {
 		}
 
 		requestObserver.onCompleted();
+		channel.shutdown();
 	}
 
 	private static List <ProxyInfo> requestFileUpload(File f, long maxChunks) {
@@ -227,49 +215,59 @@ public class Client {
 	private static void showMenu() {
 		System.out.println("Select an option and press Enter: \n"
 				+ "1) List Files\n" 
-				+ "2) Request File Info\n"
-				+ "3) Download File Chunk\n"
-				+ "4) Request File Upload\n"
-				+ "5) Upload File\n"
+				+ "2) Download File Chunk\n"
+				+ "3) Upload File\n"
 				);
 	}
 
-	private static void downloadFile(String fileName, List<ProxyInfo> readProxies) throws IOException {
+	private static void downloadFile(String fileName, OutputStream out) throws IOException {
 		// TODO Auto-generated method stub
 		System.out.println("downloadFile called with" + fileName);
-//		FileLocationInfo fileDetails = requestFileInfo(fileName);
-//		
-//		readProxies = fileDetails.getLstProxyList();
-//		int proxyNum = readProxies.size();
-//		long maxChunks = fileDetails.getMaxChunks();
-//		
-//		HashMap<Integer, ProxyInfo> proxyMap = new HashMap<Integer, ProxyInfo>();
-//		for(int i=1; i <= maxChunks; i++) {
-//			ProxyInfo proxy = readProxies.get((i-1) % proxyNum);
-//			
-//			DataTransferServiceGrpc.DataTransferServiceBlockingStub blockingStub 
-//				= DataTransferServiceGrpc.newBlockingStub(getChannel(proxy.getIp() + ":" + proxy.getPort()));
-//			
-//			ChunkInfo downloadRequest = ChunkInfo.newBuilder()
-//					.setFileName(fileDetails.getFileName()).setChunkId(i).setStartSeqNum(1).build();
-//			
-//			Iterator<FileMetaData> fileData; 
-//			OutputStream out = new FileOutputStream(fileName);
-//			fileData = blockingStub.downloadChunk(downloadRequest);
-//			long initChunk = fileData.next().getChunkId();
-//			while(fileData.hasNext()) {
-//				FileMetaData dataObj = fileData.next();
-//				if(initChunk == dataObj.getChunkId()) {
-//					if(dataObj.getSeqNum() <= dataObj.getSeqMax()) {
-//						byte [] data = dataObj.getData().toByteArray();
-//						out.write(data);
-//					}
-//				}
-//			}
-//		}
-//		
-//		
-//		
+		FileLocationInfo fileDetails = requestFileInfo(fileName);
+		
+		List<ProxyInfo> readProxies = fileDetails.getLstProxyList();
+		int proxyNum = readProxies.size();
+		long maxChunks = fileDetails.getMaxChunks();
+		
+		for(int i=1; i <= maxChunks; i++) {
+			ProxyInfo proxy = readProxies.get((i-1) % proxyNum);
+			
+			ManagedChannel channel = getChannel(proxy.getIp() + ":" + proxy.getPort());
+			
+			DataTransferServiceGrpc.DataTransferServiceStub asyncStub 
+				= DataTransferServiceGrpc.newStub(channel);
+			
+			ChunkInfo downloadRequest = ChunkInfo.newBuilder()
+					.setFileName(fileDetails.getFileName()).setChunkId(i).setStartSeqNum(1).build();
+			
+			asyncStub.downloadChunk(downloadRequest, new StreamObserver<FileMetaData>() {
+
+				@Override
+				public void onNext(FileMetaData fileData) {
+					byte [] data = fileData.getData().toByteArray();
+					try {
+						out.write(data);
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					
+				}
+
+				@Override
+				public void onError(Throwable t) {
+					// TODO Auto-generated method stub
+					t.printStackTrace();
+				}
+
+				@Override
+				public void onCompleted() {
+					// TODO Auto-generated method stub
+					channel.shutdown();
+				}
+				
+			});
+		}
 
 	}
 
