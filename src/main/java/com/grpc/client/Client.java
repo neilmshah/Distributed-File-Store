@@ -32,6 +32,7 @@ import grpc.FileTransfer.RequestFileList;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
+import grpc.DataTransferServiceGrpc.DataTransferServiceStub;
 
 public class Client {
 
@@ -103,12 +104,46 @@ public class Client {
 		/**
 		 *  Allocating chunks to each Proxy
 		 */
-		HashMap<Integer, ProxyInfo> proxyMap = new HashMap<Integer, ProxyInfo>();
+//		HashMap<Integer, ProxyInfo> proxyMap = new HashMap<Integer, ProxyInfo>();
+//		if(maxChunks % proxyNum  == 0) {
+//			int allottedChunks = maxChunks/proxyNum, start = 1, pr = 0;
+//			for(int i=1; i <= maxChunks; i++) {
+//				if(i < start+allottedChunks) {
+//					proxyMap.put(i, proxyList.get(pr));
+//					if (start+allottedChunks-i == 1) {
+//						start = i+1;
+//						pr++;
+//					}
+//				}
+//			}
+//		} else {
+//		    int allottedChunks = maxChunks/(proxyNum-1), start=1, pr=0;
+//			for(int i=1; i <= maxChunks-1; i++) {
+//				if(i < start+allottedChunks) {
+//					proxyMap.put(i, proxyList.get(pr));
+//					if (start+allottedChunks-i == 1) {
+//						start = i+1;
+//						pr++;
+//					}
+//				}
+//			}
+//			proxyMap.put(maxChunks, proxyList.get(pr));
+//		}
+		
+		
+		
+		/**
+		 *  Allocating each chunk to stubs
+		 */
+		HashMap<Integer, DataTransferServiceStub> stubMap = new HashMap<Integer, DataTransferServiceStub>();
 		if(maxChunks % proxyNum  == 0) {
 			int allottedChunks = maxChunks/proxyNum, start = 1, pr = 0;
 			for(int i=1; i <= maxChunks; i++) {
 				if(i < start+allottedChunks) {
-					proxyMap.put(i, proxyList.get(pr));
+					ProxyInfo proxy = proxyList.get(pr);
+					ManagedChannel channel = getChannel(proxy.getIp()+":"+proxy.getPort());
+					DataTransferServiceStub asyncStub = DataTransferServiceGrpc.newStub(channel);
+					stubMap.put(i, asyncStub);
 					if (start+allottedChunks-i == 1) {
 						start = i+1;
 						pr++;
@@ -119,15 +154,22 @@ public class Client {
 		    int allottedChunks = maxChunks/(proxyNum-1), start=1, pr=0;
 			for(int i=1; i <= maxChunks-1; i++) {
 				if(i < start+allottedChunks) {
-					proxyMap.put(i, proxyList.get(pr));
+					ProxyInfo proxy = proxyList.get(pr);
+					ManagedChannel channel = getChannel(proxy.getIp()+":"+proxy.getPort());
+					DataTransferServiceStub asyncStub = DataTransferServiceGrpc.newStub(channel);
+					stubMap.put(i, asyncStub);
 					if (start+allottedChunks-i == 1) {
 						start = i+1;
 						pr++;
 					}
 				}
 			}
-			proxyMap.put(maxChunks, proxyList.get(pr));
+			ProxyInfo proxy = proxyList.get(pr);
+			ManagedChannel channel = getChannel(proxy.getIp()+":"+proxy.getPort());
+			DataTransferServiceStub asyncStub = DataTransferServiceGrpc.newStub(channel);
+			stubMap.put(maxChunks, asyncStub);
 		}
+		
 		
 
 		StreamObserver<FileInfo> responseObserver = new StreamObserver<FileInfo>() {
@@ -157,13 +199,7 @@ public class Client {
 		int bytesAmount = 0, seqNum = 0, chunkId = 1;
 
 		while ((bytesAmount = bis.read(buffer)) > 0) {
-			
-			ManagedChannel channel = getChannel(proxyMap.get(chunkId).getIp() + ":" + proxyMap.get(chunkId).getPort());
-			
-			DataTransferServiceGrpc.DataTransferServiceStub asyncStub 
-			= DataTransferServiceGrpc.newStub(channel);
-			
-			StreamObserver<FileTransfer.FileUploadData> requestObserver = asyncStub.uploadFile(responseObserver);
+			StreamObserver<FileTransfer.FileUploadData> requestObserver = stubMap.get(chunkId).uploadFile(responseObserver);
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
 			seqNum++;
 			out.write(buffer, 0, bytesAmount);	
@@ -178,12 +214,12 @@ public class Client {
 			
 			if(seqNum == seqMax && chunkId < maxChunks) {
 				requestObserver.onCompleted();
-				channel.shutdown();
+				((ManagedChannel) stubMap.get(chunkId).getChannel()).shutdown();
 				seqNum = 0;
 				chunkId++;
 			} else if(seqNum == (totalSeq % (maxChunks-1)) && chunkId == maxChunks){
 				requestObserver.onCompleted();
-				channel.shutdown();
+				((ManagedChannel) stubMap.get(chunkId).getChannel()).shutdown();
 			}
 		}
 	}
