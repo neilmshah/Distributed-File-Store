@@ -106,12 +106,17 @@ public class TeamClusterServiceImpl extends TeamClusterServiceGrpc.TeamClusterSe
 
 		//TODO how to tell server to share a value with the others
 		//server.changes.add(key+"\\"+value);
-		if(pollValueChange(key, value))
+		boolean acceptChange = false;
+		if(pollValueChange(key, value)){
 			confirmValueChange(key, value);
-		
+			acceptChange = true;
+			server.data.put(key, value);
+			server.numEntries++;
+		}
+
 		Team.Ack response = Team.Ack.newBuilder()
 				.setMessageId(request.getMessageId())
-				.setIsAck(true)
+				.setIsAck(acceptChange)
 				.build();
 
 		// Use responseObserver to send a single response back
