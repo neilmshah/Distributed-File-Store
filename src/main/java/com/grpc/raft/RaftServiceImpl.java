@@ -11,7 +11,6 @@ public class RaftServiceImpl extends RaftServiceGrpc.RaftServiceImplBase{
 	private String setkey = null;
 	private String setvalue = null;
 
-	private boolean hasVoted = false;
 	private long voteIndex = -1; //who this server is voting for
 
 	public RaftServiceImpl(RaftServer serv){
@@ -42,6 +41,7 @@ public class RaftServiceImpl extends RaftServiceGrpc.RaftServiceImplBase{
 		//If this term < sent term
 		else if(server.term < request.getTerm()){
 			//Set this term as request's term, step down, reset election timer
+			server.hasVoted = false;
 			server.term = request.getTerm();
 			server.raftState = 0; //0 is follower
 			server.resetTimeoutTimer();
@@ -56,6 +56,7 @@ public class RaftServiceImpl extends RaftServiceGrpc.RaftServiceImplBase{
 
 		//Mismatched stored data
 		if(request.getAppendedEntries() > server.numEntries){ //requester ahead
+			server.hasVoted = false;
 			server.resetTimeoutTimer();
 			Raft.Response response = Raft.Response.newBuilder()
 					.setAccept(false)
@@ -75,6 +76,7 @@ public class RaftServiceImpl extends RaftServiceGrpc.RaftServiceImplBase{
 		}
 
 		//Everything is fine
+		server.hasVoted = false;
 		server.resetTimeoutTimer();
 		//If received a heartbeat after receiving an entry to add, commit it
 		if(setkey != null){
@@ -82,12 +84,14 @@ public class RaftServiceImpl extends RaftServiceGrpc.RaftServiceImplBase{
 			setkey = null;
 			setvalue = null;
 		}
+		/* This should not be needed anymore, since value setting is handled by a new rpc function
 		//If received an entry to add, store it for now, return acceptance
 		if(request.getEntry() != null){
-			System.out.println("Received non-null entry!");
+			//System.out.println("Received non-null entry!");
+			//System.out.println(request.getEntry().getKey());
 			setkey = request.getEntry().getKey();
 			setvalue = request.getEntry().getValue();
-		}
+		}*/
 
 		Raft.Response response = Raft.Response.newBuilder()
 				.setAccept(true)
@@ -129,12 +133,16 @@ public class RaftServiceImpl extends RaftServiceGrpc.RaftServiceImplBase{
 	@Override
 	public void requestVote(Raft.VoteRequest request,
 							StreamObserver<Raft.Response> responseObserver){
+		System.out.println("Received vote request from "+request.getMyindex());
+
 		//Candidate has higher term, vote yes and set own values
 		Raft.Response response = null;
 		if(request.getTerm() > server.term){
+			System.out.println(request.getMyindex()+" is of higher term, voting for it!");
 			server.term = request.getTerm();
 			server.raftState = 0;
-			hasVoted = true;
+			server.resetTimeoutTimer();
+			server.hasVoted = true;
 		//	voteIndex = request.getLeader();
 			response = Raft.Response.newBuilder()
 					.setAccept(true)
@@ -143,18 +151,21 @@ public class RaftServiceImpl extends RaftServiceGrpc.RaftServiceImplBase{
 		}
 		//Candidate has lower term, vote no
 		else if(request.getTerm() < server.term){
+			System.out.println(request.getMyindex()+" is of lower term, vote against");
 			response = Raft.Response.newBuilder()
 					.setAccept(false)
 					.setRequireUpdate(false)
 					.build();
 		}
-		else{
+		else if(!server.hasVoted){
+			System.out.println("Not running, voting for "+request.getMyindex());
 			response = Raft.Response.newBuilder()
 					.setAccept(true)
 					.setRequireUpdate(false)
 					.build();
 		}
 		responseObserver.onNext(response);
+		responseObserver.onCompleted();
 	}
 
 	/**
