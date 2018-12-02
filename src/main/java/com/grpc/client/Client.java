@@ -34,6 +34,11 @@ import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
 import grpc.DataTransferServiceGrpc.DataTransferServiceStub;
 
+/**
+ * Client to initiate all requests
+ * @author Manogna
+ */
+
 public class Client {
 
 	private static ManagedChannel getChannel(String address) {
