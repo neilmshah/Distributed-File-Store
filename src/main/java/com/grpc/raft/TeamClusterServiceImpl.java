@@ -42,10 +42,10 @@ public class TeamClusterServiceImpl extends TeamClusterServiceGrpc.TeamClusterSe
 	
 	
 	@Override
-	public void heartbeat(Ack request, StreamObserver<Ack> responseObserver) {
+	public void heartbeat(Team.Ack request, StreamObserver<Team.Ack> responseObserver) {
 		
 		Team.Ack  response = Team.Ack.newBuilder().setIsAck(true).setMessageId(request.getMessageId()).build();
-	    responseObserver.onNext(response);
+		responseObserver.onNext(response);
 	    responseObserver.onCompleted();
 		
 	}
@@ -99,6 +99,7 @@ public class TeamClusterServiceImpl extends TeamClusterServiceGrpc.TeamClusterSe
 			}
 			valArr[1] = builder.toString().substring(0, builder.length() - 1);
 			String newValue = valArr[0] + "$"+ valArr[1];
+			value = newValue;
 			//server.data.put(key, newValue);
 			
 		}
