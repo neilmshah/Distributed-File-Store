@@ -10,6 +10,7 @@ import java.util.logging.Logger;
 
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
+import com.grpc.proxy.ProxyServer;
 import com.util.ConfigUtil;
 import com.util.Connection;
 import grpc.Raft;
@@ -29,6 +30,10 @@ import javax.annotation.Nullable;
  */
 public class RaftServer {
 
+	private final static org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(RaftServer.class);
+	private final static int LEADER_TIMEOUT = 3000;
+	private final static int HEARTBEAT_SCHEDULE = 1000;
+
 	//Raft Internals
 	protected ConcurrentHashMap<String, String> data;
 	protected int numEntries;
@@ -44,6 +49,7 @@ public class RaftServer {
 
 	private AtomicInteger votes;
 	private AtomicInteger accepts; //number of nodes that accepted a change
+	protected boolean hasVoted;
 
 	//Raft Sending Messages
 	private List<ManagedChannel> channels;
@@ -61,7 +67,7 @@ public class RaftServer {
 
 		electionTimer = new Timer();
 		heartbeatTimer = new Timer();
-		//resetTimeoutTimer(); TODO uncomment when ready to test raft itself!
+		resetTimeoutTimer(); //TODO uncomment when ready to test raft itself!
 		this.index = index;
 
 		votes = new AtomicInteger(0);
@@ -81,7 +87,6 @@ public class RaftServer {
 	}
 
     public static void main( String[] args ) {
-		Logger.getLogger("io.grpc").setLevel(Level.SEVERE);
 		new ConfigUtil();
 
 		System.out.println("Hello Raft!");
@@ -114,7 +119,7 @@ public class RaftServer {
 			e.printStackTrace();
 		}
 
-        System.out.println("Raft Server started");
+        System.out.println("Started Raft Node: "+index);
         
         try {
 			server.awaitTermination();
@@ -129,6 +134,7 @@ public class RaftServer {
 	 * Sets/resets the deadline of the election timeout
 	 */
 	public void resetTimeoutTimer(){
+		System.out.println("Resetting leader timeout timer");
 		//Cancel previous startElection event if initialized, clean timer
 		if(electionEvent != null)
 			electionEvent.cancel();
@@ -141,7 +147,7 @@ public class RaftServer {
 				leaderTimeout();
 			}
 		};
-		electionTimer.schedule(electionEvent, (long)(150*(Math.random()+1)));
+		electionTimer.schedule(electionEvent, (long)(LEADER_TIMEOUT*(Math.random()+1)));
 	}
 
 
@@ -157,7 +163,7 @@ public class RaftServer {
 				sendHeartbeat();
 			}
 		};
-		heartbeatTimer.schedule(heartbeatEvent, 100);
+		heartbeatTimer.schedule(heartbeatEvent, HEARTBEAT_SCHEDULE);
 	}
 
     //The following methods are called via Timer, thus will run on a new thread
@@ -167,12 +173,16 @@ public class RaftServer {
     Called when a leader times out
      */
 	public void leaderTimeout(){
+		System.out.println("Leader Timeout! Initiating election for node "+index);
     	//Become candidate, reset voting mechanism, increment term
 		raftState = 1;
-		votes.set(0);
+		votes.set(1); //vote for self, so start at 1
 		term++;
+		hasVoted = true;
 		//Send async messages asking for votes
 		for(int i = 0; i < stubs.size(); i++){
+			if(i == index) //don't bother asking self for vote, auto yes
+				continue;
 			RaftServiceGrpc.RaftServiceFutureStub stub = stubs.get(i);
 			final int stubIndex = i;
 			Raft.VoteRequest request = Raft.VoteRequest.newBuilder()
@@ -205,19 +215,25 @@ public class RaftServer {
 		//Count the vote
 		if(acceptVote)
 			votes.incrementAndGet();
+		System.out.println("Current Votes: "+votes.get()+" / "+ConfigUtil.raftNodes.size());
 		//Declare this node the leader, cancel the timeout timer
-		if(votes.intValue() > ConfigUtil.raftNodes.size()/2){
+		if(votes.get() > ConfigUtil.raftNodes.size()/2){
+			System.out.println("Node "+index+" Elected Leader!");
 			raftState = 2;
 			votes.set(0);
 			electionEvent.cancel();
+			resetHeartbeatTimer();
 		}
 	}
 
 	public void sendHeartbeat(){
+		System.out.println("Sending heartbeat to nodes!");
 		//Send async heartbeat messages with timeouts
 		//If syncUsers[index] = true, send whole map with it as well, then set syncUsers[index] to false
 		//If response asks for sync, set syncUsers to true for that user
 		for(int i = 0; i < stubs.size(); i++){
+			if(i == index) //no need to send heartbeat to own node
+				continue;
 			RaftServiceGrpc.RaftServiceFutureStub stub = stubs.get(i);
 			final int stubIndex = i;
 			Raft.EntryAppend request = Raft.EntryAppend.newBuilder()

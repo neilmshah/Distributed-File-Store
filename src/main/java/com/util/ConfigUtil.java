@@ -35,7 +35,12 @@ public class ConfigUtil {
         JSONArray raftArr = (JSONArray)config.get("raftNodes");
         JSONArray dbarr = (JSONArray)config.get("databaseNodes");
         JSONArray globalArr = (JSONArray)config.get("globalNodes");
-        
+
+		raftNodes = new ArrayList<Connection>();
+		proxyNodes = new ArrayList<Connection>();
+		databaseNodes = new ArrayList<Connection>();
+		globalNodes = new ArrayList<Connection>();
+
     	for(int i = 0; i < proxyArr.length(); i++){
 			JSONObject obj = proxyArr.getJSONObject(i);
 			proxyNodes.add(new Connection(obj.getString("host"),obj.getInt("port")));
@@ -45,6 +50,8 @@ public class ConfigUtil {
 			JSONObject obj = raftArr.getJSONObject(i);
 			raftNodes.add(new Connection(obj.getString("host"),obj.getInt("port")));
 		}
+		for(Connection c : raftNodes)
+			System.out.println("Node "+c.getIP()+":"+c.getPort());
 
 		for(int i = 0; i < dbarr.length(); i++){
 			JSONObject obj = dbarr.getJSONObject(i);
