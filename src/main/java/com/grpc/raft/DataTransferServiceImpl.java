@@ -113,9 +113,9 @@ public class DataTransferServiceImpl extends DataTransferServiceGrpc.DataTransfe
 		List<FileTransfer.ProxyInfo> activeProxies= getLiveProxies();
 		boolean isFileFound = false;
 		String  maxChunks="0";
-		if(server.data.get(request.getFileName()+KEY_DELIMINATOR+"0")!= null) {
+		if(server.data.get(request.getFileName()+KEY_DELIMINATOR+"0"+KEY_DELIMINATOR+"0")!= null) {
 			isFileFound = true;
-			String value =  server.data.get(request.getFileName()+KEY_DELIMINATOR+"0");
+			String value =  server.data.get(request.getFileName()+KEY_DELIMINATOR+"0"+ KEY_DELIMINATOR+ "0");
 			maxChunks = value.split("\\$")[0];
 		}
 
@@ -164,7 +164,7 @@ public class DataTransferServiceImpl extends DataTransferServiceGrpc.DataTransfe
 		logger.debug("RequestFileInfo started...");
 		FileTransfer.FileLocationInfo response = null;
 		List<FileTransfer.ProxyInfo> activeProxies = null;
-		String value = server.data.get(request.getFileName() + KEY_DELIMINATOR+"0");  
+		String value = server.data.get(request.getFileName() + KEY_DELIMINATOR+"0"+KEY_DELIMINATOR+"0");  
 		String maxChunks = "0";
 		//If not found in own team
 		if(value == null) {
