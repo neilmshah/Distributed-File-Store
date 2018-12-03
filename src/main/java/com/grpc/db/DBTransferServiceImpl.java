@@ -81,7 +81,7 @@ public class DBTransferServiceImpl extends DataTransferServiceGrpc.DataTransferS
 		
 		
 		for (Entry<String, FileData> entry : db.entrySet()) {
-	        if (entry.getKey().startsWith(request.getFileName())) {
+	        if (entry.getKey().startsWith(request.getFileName()+KEY_DELIMINATOR+request.getChunkId())) {
 	        	  
 	        	 responseObserver.onNext(
 	    				 FileMetaData.newBuilder()
