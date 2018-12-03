@@ -35,11 +35,13 @@ public class HeartbeatService {
 			          .setMessageId(new Random().nextLong())
 			          .build();
 
-			Team.Ack response = stub.heartbeat(request);
-
-			if(response.getIsAck() && response.getMessageId() == request.getMessageId()) {
-				proxies[i] = true;
+			proxies[i] = false;
+			try {
+				Team.Ack response = stub.heartbeat(request);
+				if(response.getIsAck())
+					proxies[i] = true;
 			}
+			catch (Exception e){}
 			
 			i++;
 			channel.shutdownNow();
