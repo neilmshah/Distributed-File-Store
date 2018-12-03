@@ -40,18 +40,18 @@ public class ProxyDataTransferServiceImpl extends DataTransferServiceGrpc.DataTr
 
 		return new StreamObserver<FileTransfer.FileUploadData>() {
 			
-			List<Connection> successFullDbNnodes= new ArrayList<Connection>();
+			List<Connection> successFullDbNnodes= null;
 			String fileName;
-			FileUploadData fileUploadData;
 
 			@Override
 			public void onNext(FileUploadData value) {
 				successFullDbNnodes = new ArrayList<Connection>();
 				fileName = value.getFileName();
-				fileUploadData = value; 
 				//for(Connection dbNode : ConfigUtil.databaseNodes ) {
 				proxyClient.uploadDataToDB(value, ownDB, successFullDbNnodes);
-				
+				logger.debug("Successfull DB Nodes -> " + successFullDbNnodes.size());
+				successFullDbNnodes.add(ownDB);
+				proxyClient.updateChunkLocations(successFullDbNnodes, ConfigUtil.raftNodes.get(0), value);
 			}
 
 			
@@ -63,8 +63,6 @@ public class ProxyDataTransferServiceImpl extends DataTransferServiceGrpc.DataTr
 
 			@Override
 			public void onCompleted() {
-				logger.debug("Successfull DB Nodes -> " + successFullDbNnodes.size());
-				proxyClient.updateChunkLocations(successFullDbNnodes, ConfigUtil.raftNodes.get(0), fileUploadData);
 				responseObserver.onNext(FileInfo.newBuilder()
 						.setFileName(fileName)
 						.build());
