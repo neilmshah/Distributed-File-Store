@@ -226,7 +226,7 @@ public class TeamClusterServiceImpl extends TeamClusterServiceGrpc.TeamClusterSe
 	@Override
 	public void getChunkLocations(grpc.Team.FileData request,
 		        io.grpc.stub.StreamObserver<grpc.Team.ChunkLocations> responseObserver) {
-		String key = request.getFileName()+KEY_DELIMINATOR+ request.getChunkId();
+		String key = request.getFileName()+KEY_DELIMINATOR+ request.getChunkId()+KEY_DELIMINATOR+request.getMessageId();
 		String value = server.data.get(key);
 
 		logger.debug("Getting chunk data: key="+key+"\nvalue="+value);
