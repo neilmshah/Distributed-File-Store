@@ -59,7 +59,7 @@ public class ConfigUtil {
 		}
 		
 		for(int i = 0; i < globalArr.length(); i++){
-			JSONObject obj = dbarr.getJSONObject(i);
+			JSONObject obj = globalArr.getJSONObject(i);
 			globalNodes.add(new Connection(obj.getString("host"),obj.getInt("port")));
 		}
     }

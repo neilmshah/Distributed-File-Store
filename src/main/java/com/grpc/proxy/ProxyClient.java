@@ -162,7 +162,7 @@ public class ProxyClient {
 	    Team.Ack response = blockingStub.updateChunkLocations(request);
 	    logger.debug(response.getIsAck() +"  " + addressString);
 		logger.debug("updateChunkLocations rpc finished ..");
-	    channel.shutdownNow();
+	    //channel.shutdownNow();
 
 	}
 }

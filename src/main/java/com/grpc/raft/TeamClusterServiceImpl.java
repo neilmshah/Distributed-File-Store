@@ -98,9 +98,10 @@ public class TeamClusterServiceImpl extends TeamClusterServiceGrpc.TeamClusterSe
 			StringBuilder builder = new StringBuilder();
 			for(int i =0;i<request.getDbAddressesCount();i++) {
 				builder.append(request.getDbAddresses(i));
-				builder.append(",");
+				if(i != request.getDbAddressesCount()-1)
+					builder.append(",");
 			}
-			valArr[1] = builder.toString().substring(0, builder.length() - 1);
+			valArr[1] = builder.toString();
 			String newValue = valArr[0] + "$"+ valArr[1];
 			value = newValue;
 			//server.data.put(key, newValue);

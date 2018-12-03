@@ -29,7 +29,7 @@ public class TestRaftConnectionClass {
 				new String[]{"localhost:8000", "localhost:9001", "127.0.0.1:1006", "YEET!"})
 		);
 		Team.ChunkLocations request = Team.ChunkLocations.newBuilder()
-				.setFileName("poop8.jpg")
+				.setFileName("poop1.jpg")
 				.setChunkId(0)
 				.addAllDbAddresses(addr)
 				.setMaxChunks(2)
@@ -38,11 +38,11 @@ public class TestRaftConnectionClass {
 		//channel.shutdown();
 
 
-		channel = ManagedChannelBuilder.forTarget("10.0.20.4:10000").usePlaintext(true).build();
+		channel = ManagedChannelBuilder.forTarget("10.0.20.2:10000").usePlaintext(true).build();
 		stub = TeamClusterServiceGrpc.newBlockingStub(channel);
 		Team.FileData req2 = Team.FileData.newBuilder()
-				.setFileName("poop8.jpg")
-				.setChunkId(0)
+				.setFileName("Introduction to Map Reduce.pdf")
+				.setChunkId(2)
 				.build();
 		Team.ChunkLocations res2 = stub.getChunkLocations(req2);
 		System.out.println("DB Addresses: ");
