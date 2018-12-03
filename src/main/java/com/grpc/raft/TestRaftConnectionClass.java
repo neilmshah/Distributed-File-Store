@@ -20,7 +20,7 @@ public class TestRaftConnectionClass {
 
 	public static void main(String [] args){
 		ManagedChannel channel = ManagedChannelBuilder
-				.forTarget("localhost:10000").usePlaintext(true).build();
+				.forTarget("localhost:10001").usePlaintext(true).build();
 		TeamClusterServiceGrpc.TeamClusterServiceBlockingStub stub =
 				TeamClusterServiceGrpc.newBlockingStub(channel);
 
@@ -37,7 +37,7 @@ public class TestRaftConnectionClass {
 		System.out.println(stub.updateChunkLocations(request).getIsAck());
 		//channel.shutdown();
 
-		channel = ManagedChannelBuilder.forTarget("localhost:10000").usePlaintext(true).build();
+		channel = ManagedChannelBuilder.forTarget("localhost:10001").usePlaintext(true).build();
 		stub = TeamClusterServiceGrpc.newBlockingStub(channel);
 		Team.FileData req2 = Team.FileData.newBuilder()
 				.setFileName("poop.jpg")

@@ -73,7 +73,7 @@ public class TeamClusterServiceImpl extends TeamClusterServiceGrpc.TeamClusterSe
 		}
 
 		logger.debug("UpdateChunkLocations started.. ");
-		String key = request.getFileName()+KEY_DELIMINATOR+ request.getChunkId()+KEY_DELIMINATOR+request.getMessageId();
+		String key = request.getFileName()+KEY_DELIMINATOR+ request.getChunkId();
 		String value = server.data.get(key);
 		logger.debug("Value presently stored in hashmap for key "+key+": "+value);
 		
@@ -202,7 +202,7 @@ public class TeamClusterServiceImpl extends TeamClusterServiceGrpc.TeamClusterSe
 					.setAppendedEntries(server.numEntries)
 					.build();
 
-			//Raft.Response vote = stub.withDeadlineAfter(25, TimeUnit.MILLISECONDS).acceptEntry(voteReq);
+			Raft.Response vote = stub.acceptEntry(voteReq);
 		}
 	}
 	
@@ -216,9 +216,10 @@ public class TeamClusterServiceImpl extends TeamClusterServiceGrpc.TeamClusterSe
 	@Override
 	public void getChunkLocations(grpc.Team.FileData request,
 		        io.grpc.stub.StreamObserver<grpc.Team.ChunkLocations> responseObserver) {
-		String key = request.getFileName()+KEY_DELIMINATOR+ request.getChunkId()+KEY_DELIMINATOR+request.getMessageId();
+		String key = request.getFileName()+KEY_DELIMINATOR+ request.getChunkId();
 		String value = server.data.get(key);
 
+		logger.debug("Getting chunk data: key="+key+"\nvalue="+value);
 		String[] valArr = value.split("\\$");
 		ArrayList<String> arrayList = new ArrayList<String>(Arrays.asList(valArr[1]));
 		

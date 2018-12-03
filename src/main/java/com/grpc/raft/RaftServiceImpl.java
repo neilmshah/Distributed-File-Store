@@ -45,6 +45,7 @@ public class RaftServiceImpl extends RaftServiceGrpc.RaftServiceImplBase{
 			server.hasVoted = false;
 			server.term = request.getTerm();
 			server.raftState = 0; //0 is follower
+			server.currentLeaderIndex = request.getLeader();
 			server.resetTimeoutTimer();
 			Raft.Response response = Raft.Response.newBuilder()
 					.setAccept(true)
@@ -59,6 +60,7 @@ public class RaftServiceImpl extends RaftServiceGrpc.RaftServiceImplBase{
 		if(request.getAppendedEntries() > server.numEntries){ //requester ahead
 			server.hasVoted = false;
 			server.resetTimeoutTimer();
+			server.currentLeaderIndex = request.getLeader();
 			Raft.Response response = Raft.Response.newBuilder()
 					.setAccept(false)
 					.setRequireUpdate(true)
@@ -79,6 +81,7 @@ public class RaftServiceImpl extends RaftServiceGrpc.RaftServiceImplBase{
 		//Everything is fine
 		server.hasVoted = false;
 		server.resetTimeoutTimer();
+		server.currentLeaderIndex = request.getLeader();
 		//If received a heartbeat after receiving an entry to add, commit it
 		if(setkey != null){
 			server.data.put(setkey, setvalue);
@@ -205,6 +208,8 @@ public class RaftServiceImpl extends RaftServiceGrpc.RaftServiceImplBase{
 	public void acceptEntry(Raft.EntryAppend request,
 							StreamObserver<Raft.Response> responseObserver){
 
+		System.out.println("Accepting entry addition from leader!");
+		System.out.println("Key="+request.getEntry().getKey()+"Value="+request.getEntry().getValue());
 		server.data.put(request.getEntry().getKey(), request.getEntry().getValue());
 		server.numEntries++;
 
