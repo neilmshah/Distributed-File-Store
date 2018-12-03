@@ -84,8 +84,8 @@ public class RaftClient {
 					.build();
 
 			DataTransferServiceGrpc.DataTransferServiceBlockingStub stub = DataTransferServiceGrpc.newBlockingStub(channel);
-
-			FileTransfer.FileList response =  stub.listFiles(request);
+			RequestFileList requestNew = RequestFileList.newBuilder().setIsClient(false).build();
+			FileTransfer.FileList response =  stub.listFiles(requestNew);
 			if(response.getLstFileNamesCount() != 0) {
 				for(int i = 0;i< response.getLstFileNamesCount();i++) {
 					fileList.add(response.getLstFileNames(i));
