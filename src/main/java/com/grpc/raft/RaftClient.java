@@ -77,7 +77,7 @@ public class RaftClient {
 		ManagedChannel channel = null;
 		String addressString = null;
 		for(Connection connection : globalNodes) {
-
+  
 			addressString = connection.getIP() +":" +  connection.getPort();
 			channel = ManagedChannelBuilder.forTarget(addressString)
 					.usePlaintext(true)
