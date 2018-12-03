@@ -47,6 +47,7 @@ public class RaftServiceImpl extends RaftServiceGrpc.RaftServiceImplBase{
 			server.raftState = 0; //0 is follower
 			server.currentLeaderIndex = request.getLeader();
 			server.resetTimeoutTimer();
+			server.heartbeatEvent.cancel();
 			Raft.Response response = Raft.Response.newBuilder()
 					.setAccept(true)
 					.setRequireUpdate(true)

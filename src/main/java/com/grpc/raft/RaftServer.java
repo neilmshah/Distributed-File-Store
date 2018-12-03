@@ -45,7 +45,7 @@ public class RaftServer {
 	protected ConcurrentLinkedQueue<String> changes;
 
 	private Timer electionTimer, heartbeatTimer;
-	private TimerTask electionEvent, heartbeatEvent;
+	public TimerTask electionEvent, heartbeatEvent;
 
 	private AtomicInteger votes;
 	private AtomicInteger accepts; //number of nodes that accepted a change
