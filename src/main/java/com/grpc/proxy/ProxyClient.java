@@ -102,7 +102,7 @@ public class ProxyClient {
 			try {
 				fileMetaDataList = blockingStub.downloadChunk(request);
 				} catch (StatusRuntimeException ex) {
-				  logger.log(Level.WARN, "RPC failed: {0}");
+				  logger.log(Level.WARN, "RPC failed: {0} from "+ li);
 				}
 			channel.shutdown();
 			if(fileMetaDataList != null) {
@@ -160,6 +160,7 @@ public class ProxyClient {
 										.build();
 
 	    Team.Ack response = blockingStub.updateChunkLocations(request);
+	    logger.debug(response.getIsAck() +"  " + addressString);
 		logger.debug("updateChunkLocations rpc finished ..");
 	    channel.shutdownNow();
 

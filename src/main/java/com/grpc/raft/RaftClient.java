@@ -21,7 +21,7 @@ import io.grpc.ManagedChannelBuilder;
 public class RaftClient {
 
 	final static Logger logger = Logger.getLogger(RaftClient.class);
-	
+
 	/**
 	 * This function gets the addresses of global nodes and calls the RPC getFileLocation to each of them
 	 * If FileFound == true then add to a list of FileTransfer.FileLocationInfo.
@@ -29,10 +29,10 @@ public class RaftClient {
 	 * @param request
 	 * @return
 	 */
-	
-	
+
+
 	public FileTransfer.FileLocationInfo getFileLocationFromOtherTeam(List<Connection> globalNodes, FileInfo request) {
-		
+
 		logger.debug("Getting File locations from all the clusters..");
 		ManagedChannel channel = null;
 		String addressString = null;
@@ -44,21 +44,27 @@ public class RaftClient {
 					.build();
 
 			DataTransferServiceGrpc.DataTransferServiceBlockingStub stub = DataTransferServiceGrpc.newBlockingStub(channel);
-			FileTransfer.FileLocationInfo response =  stub.getFileLocation(request);
-			
+			FileTransfer.FileLocationInfo response  = null;
+			try {
+				response =  stub.getFileLocation(request);
+			}
+			catch(Exception e) {
+				channel.shutdownNow();
+				continue;
+			}
 			if(response.getIsFileFound()) {
 				logger.debug("File Found in "+ addressString +"!! ");
 				channel.shutdownNow();
 				return response;
 
 			}
-			
+
 			channel.shutdownNow();
 		}
-		
+
 		return null;
 	}
-	
+
 	/**
 	 * This method calls the list File rpc of all the others teams. Adds to the Arraylist and returns to Rft Server
 	 * @param globalNodes
@@ -66,17 +72,17 @@ public class RaftClient {
 	 * @param request 
 	 */
 	public void listFilesFromOtherTeams(List<Connection> globalNodes, List<String> fileList, RequestFileList request) {
-		
+
 		logger.debug("List Files from all other clusters..");
 		ManagedChannel channel = null;
 		String addressString = null;
 		for(Connection connection : globalNodes) {
-				
+
 			addressString = connection.getIP() +":" +  connection.getPort();
 			channel = ManagedChannelBuilder.forTarget(addressString)
 					.usePlaintext(true)
 					.build();
-			
+
 			DataTransferServiceGrpc.DataTransferServiceBlockingStub stub = DataTransferServiceGrpc.newBlockingStub(channel);
 
 			FileTransfer.FileList response =  stub.listFiles(request);
@@ -85,7 +91,7 @@ public class RaftClient {
 					fileList.add(response.getLstFileNames(i));
 				}
 			}
-		
+
 		}
 
 	}
