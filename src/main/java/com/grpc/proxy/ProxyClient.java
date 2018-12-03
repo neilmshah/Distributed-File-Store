@@ -55,7 +55,7 @@ public class ProxyClient {
 		StreamObserver<FileTransfer.FileInfo> responseObserver = new StreamObserver<FileTransfer.FileInfo>() {
 			public void onNext(FileTransfer.FileInfo fileInfo) {
 				//send to DB
-				//successFullDbNnodes.add(dbNode);
+				successFullDbNnodes.add(dbNode);
 				logger.debug("Successfully written chunk: "+fileInfo.getFileName());
 			}
 
