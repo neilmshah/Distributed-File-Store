@@ -161,7 +161,7 @@ public class ProxyClient {
 										.addAllDbAddresses(dbNodesAsString)
 										.setFileName(value.getFileName())
 										.setMaxChunks(value.getMaxChunks())
-										.setMessageId(value.getSeqMax())
+										.setMessageId(value.getSeqNum())
 										.build();
 
 	    Team.Ack response = blockingStub.updateChunkLocations(request);
