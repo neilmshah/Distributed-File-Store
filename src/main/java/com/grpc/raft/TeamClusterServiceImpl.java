@@ -74,7 +74,7 @@ public class TeamClusterServiceImpl extends TeamClusterServiceGrpc.TeamClusterSe
 		}
 
 		logger.debug("UpdateChunkLocations started.. ");
-		String key = request.getFileName()+KEY_DELIMINATOR+ request.getChunkId();
+		String key = request.getFileName()+KEY_DELIMINATOR+ request.getChunkId()+KEY_DELIMINATOR+request.getMessageId();
 		String value = server.data.get(key);
 		logger.debug("Value presently stored in hashmap for key "+key+": "+value);
 		
