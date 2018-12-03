@@ -24,6 +24,7 @@ message EntryAppend{
 
 message EntryFix{
     repeated Entry map = 1;
+    int64 numEntries = 2;
 }
 
 message VoteRequest{
