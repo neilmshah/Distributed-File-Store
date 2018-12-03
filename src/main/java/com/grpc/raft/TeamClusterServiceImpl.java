@@ -62,12 +62,14 @@ public class TeamClusterServiceImpl extends TeamClusterServiceGrpc.TeamClusterSe
 
 		//Forward command to leader and return that
 		if(server.raftState != 2) {
+			System.out.println("updateChunkLocations called by non-leader! Forwarding to "+server.currentLeaderIndex);
 			Connection con = ConfigUtil.raftNodes.get((int) server.currentLeaderIndex);
 			ManagedChannel channel = ManagedChannelBuilder
 					.forTarget(con.getIP() + ":" + con.getPort()).usePlaintext(true).build();
 			TeamClusterServiceGrpc.TeamClusterServiceBlockingStub stub = TeamClusterServiceGrpc.newBlockingStub(channel);
 
 			responseObserver.onNext(stub.updateChunkLocations(request));
+			channel.shutdownNow();
 			responseObserver.onCompleted();
 			return;
 		}

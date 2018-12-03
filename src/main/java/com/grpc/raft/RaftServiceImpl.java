@@ -70,6 +70,9 @@ public class RaftServiceImpl extends RaftServiceGrpc.RaftServiceImplBase{
 			responseObserver.onCompleted();
 			return;
 		}else if(request.getAppendedEntries() < server.numEntries){ //this server is ahead
+			server.hasVoted = false;
+			server.resetTimeoutTimer();
+			server.currentLeaderIndex = request.getLeader();
 			Raft.Response response = Raft.Response.newBuilder()
 					.setAccept(false)
 					.setRequireUpdate(false)
