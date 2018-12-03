@@ -156,8 +156,8 @@ public class TeamClusterServiceImpl extends TeamClusterServiceGrpc.TeamClusterSe
 			Raft.Response vote = null;
 			try {
 				vote = stub.withDeadlineAfter(POLL_DEADLINE, TimeUnit.MILLISECONDS).pollEntry(voteReq);
-			}catch (io.grpc.StatusRuntimeException e){
-				logger.debug("Deadline for vote response has passed, vote rejected.");
+			}catch (Exception e){
+				//logger.debug("Deadline for vote response has passed, vote rejected.");
 			}
 			if(vote == null || !vote.getAccept())
 				acceptChange = false;
@@ -203,7 +203,11 @@ public class TeamClusterServiceImpl extends TeamClusterServiceGrpc.TeamClusterSe
 					.setAppendedEntries(server.numEntries)
 					.build();
 
-			Raft.Response vote = stub.acceptEntry(voteReq);
+			try {
+				Raft.Response vote = stub.acceptEntry(voteReq);
+			}catch (Exception e){
+
+			}
 
 			channel.shutdownNow();
 		}
