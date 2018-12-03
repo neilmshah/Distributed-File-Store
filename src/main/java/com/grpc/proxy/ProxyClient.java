@@ -82,7 +82,7 @@ public class ProxyClient {
 			e.printStackTrace();
 		}
 		requestObserver.onCompleted();
-		channel.shutdown();
+		//channel.shutdown();
 	}
 	
 	/**
