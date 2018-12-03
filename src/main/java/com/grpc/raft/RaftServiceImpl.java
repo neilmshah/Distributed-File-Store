@@ -120,7 +120,7 @@ public class RaftServiceImpl extends RaftServiceGrpc.RaftServiceImplBase{
 			server.data.put(entry.getKey(), entry.getValue());
 		}
 
-		//server.numEntries = request.getNumEntries();
+		server.numEntries = (int)request.getNumEntries();
 		Raft.Response response = Raft.Response.newBuilder()
 				.setAccept(true)
 				.setRequireUpdate(false)
