@@ -147,6 +147,7 @@ public class RaftServiceImpl extends RaftServiceGrpc.RaftServiceImplBase{
 			System.out.println(request.getMyindex()+" is of higher term, voting for it!");
 			server.term = request.getTerm();
 			server.raftState = 0;
+			server.heartbeatEvent.cancel();
 			server.resetTimeoutTimer();
 			server.hasVoted = true;
 		//	voteIndex = request.getLeader();
