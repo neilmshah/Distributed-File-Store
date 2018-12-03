@@ -69,7 +69,6 @@ public class TeamClusterServiceImpl extends TeamClusterServiceGrpc.TeamClusterSe
 			TeamClusterServiceGrpc.TeamClusterServiceBlockingStub stub = TeamClusterServiceGrpc.newBlockingStub(channel);
 
 			responseObserver.onNext(stub.updateChunkLocations(request));
-			channel.shutdownNow();
 			responseObserver.onCompleted();
 			return;
 		}
@@ -113,6 +112,7 @@ public class TeamClusterServiceImpl extends TeamClusterServiceGrpc.TeamClusterSe
 			confirmValueChange(key, value);
 			acceptChange = true;
 			server.data.put(key, value);
+			System.out.println("key/value: "+key+" , "+value);
 			server.numEntries++;
 			System.out.println("Leader pushed value change! Entries="+server.numEntries);
 		}

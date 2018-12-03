@@ -47,7 +47,8 @@ public class RaftServiceImpl extends RaftServiceGrpc.RaftServiceImplBase{
 			server.raftState = 0; //0 is follower
 			server.currentLeaderIndex = request.getLeader();
 			server.resetTimeoutTimer();
-			server.heartbeatEvent.cancel();
+			if(server.heartbeatEvent != null)
+				server.heartbeatEvent.cancel();
 			Raft.Response response = Raft.Response.newBuilder()
 					.setAccept(true)
 					.setRequireUpdate(true)
@@ -199,6 +200,9 @@ public class RaftServiceImpl extends RaftServiceGrpc.RaftServiceImplBase{
 		if(server.term <= request.getTerm() && server.numEntries <= request.getAppendedEntries()){
 			accept = true;
 		}
+
+		if(server.numEntries > request.getAppendedEntries())
+			System.out.println("pollEntry: follower says leader is behind");
 
 		Raft.Response response = Raft.Response.newBuilder().setAccept(accept).build();
 		responseObserver.onNext(response);

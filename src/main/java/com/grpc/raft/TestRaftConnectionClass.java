@@ -20,27 +20,28 @@ public class TestRaftConnectionClass {
 
 	public static void main(String [] args){
 		ManagedChannel channel = ManagedChannelBuilder
-				.forTarget("localhost:10001").usePlaintext(true).build();
+				.forTarget("10.0.20.4:10000").usePlaintext(true).build();
 		TeamClusterServiceGrpc.TeamClusterServiceBlockingStub stub =
 				TeamClusterServiceGrpc.newBlockingStub(channel);
-		/*
+
 		String [] arr = new String[]{""};
 		ArrayList<String> addr = new ArrayList<String>(Arrays.asList(
-				new String[]{"localhost:8000", "localhost:9001", "127.0.0.1:1006"})
+				new String[]{"localhost:8000", "localhost:9001", "127.0.0.1:1006", "YEET!"})
 		);
 		Team.ChunkLocations request = Team.ChunkLocations.newBuilder()
-				.setFileName("poop.jpg")
+				.setFileName("poop8.jpg")
 				.setChunkId(0)
 				.addAllDbAddresses(addr)
 				.setMaxChunks(2)
 				.build();
 		System.out.println(stub.updateChunkLocations(request).getIsAck());
 		//channel.shutdown();
-		*/
-		channel = ManagedChannelBuilder.forTarget("10.0.20.2:10000").usePlaintext(true).build();
+
+
+		channel = ManagedChannelBuilder.forTarget("10.0.20.4:10000").usePlaintext(true).build();
 		stub = TeamClusterServiceGrpc.newBlockingStub(channel);
 		Team.FileData req2 = Team.FileData.newBuilder()
-				.setFileName("honestyPledge_2016202.pdf")
+				.setFileName("poop8.jpg")
 				.setChunkId(0)
 				.build();
 		Team.ChunkLocations res2 = stub.getChunkLocations(req2);
