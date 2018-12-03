@@ -8,13 +8,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.Scanner;
 
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 import com.google.protobuf.ByteString;
@@ -23,6 +23,7 @@ import com.util.ConfigUtil;
 import com.util.Connection;
 
 import grpc.DataTransferServiceGrpc;
+import grpc.DataTransferServiceGrpc.DataTransferServiceStub;
 import grpc.FileTransfer;
 import grpc.FileTransfer.ChunkInfo;
 import grpc.FileTransfer.FileInfo;
@@ -35,8 +36,8 @@ import grpc.FileTransfer.ProxyInfo;
 import grpc.FileTransfer.RequestFileList;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
-import grpc.DataTransferServiceGrpc.DataTransferServiceStub;
 
 /**
  * Client to initiate all requests
@@ -76,7 +77,11 @@ public class Client {
 			case "2":
 				System.out.println("Enter the File Name: \n");
 				fileName = scan.nextLine();
-				OutputStream out = new FileOutputStream(fileName);
+				File file = new File("C:\\data\\SJSU2ndSem\\Gash275\\final\\"+ fileName);
+				FileOutputStream out = new FileOutputStream(file);
+				if(!file.exists()) {
+					file.createNewFile();
+				}
 				downloadFile(fileName, out);
 				break;
 			case "3":
@@ -103,6 +108,9 @@ public class Client {
 		int proxyNum = proxyList.size();
 		//TODO Alter the fixed seq size
 		int seqSize = 1024 * 1024; // 1MB
+		if(f.length() < seqSize) {
+			seqSize = (int)f.length();
+		}
 		long totalSeq = f.length()/seqSize;
 		
 		int seqMax;
@@ -223,7 +231,7 @@ public class Client {
 			requestObserver.onNext(uploadData);
 			Thread.sleep(new Random().nextInt(1000) + 500);
 			
-			if(seqNum == seqMax && chunkId < maxChunks) {
+			if((seqNum == seqMax && chunkId < maxChunks) || maxChunks == 1) {
 				requestObserver.onCompleted();
 				((ManagedChannel) stubMap.get(chunkId).getChannel()).shutdown();
 				seqNum = 0;
@@ -265,31 +273,57 @@ public class Client {
 	private static void downloadFile(String fileName, OutputStream out) throws IOException {
 		// TODO Auto-generated method stub
 		System.out.println("downloadFile called with" + fileName);
-//		FileLocationInfo fileDetails = requestFileInfo(fileName);
+		FileLocationInfo fileDetails = requestFileInfo(fileName);
 		
-//		List<ProxyInfo> readProxies = fileDetails.getLstProxyList();
-		List<ProxyInfo>  readProxies = new ArrayList<ProxyInfo>();
-		ProxyInfo p = ProxyInfo.newBuilder().setIp("10:0.20.1").setPort("3000").build();
-		readProxies.add(p);
-		ProxyInfo p1 = ProxyInfo.newBuilder().setIp("10:0.20.2").setPort("3000").build();
-		readProxies.add(p1);
-		ProxyInfo p2 = ProxyInfo.newBuilder().setIp("10:0.20.3").setPort("3000").build();
-		readProxies.add(p2);
+		if(!fileDetails.getIsFileFound()) {
+			System.out.println("File not found");
+			return;
+		}
+		
+		List<ProxyInfo> readProxies = fileDetails.getLstProxyList();
+		
 		int proxyNum = readProxies.size();
-//		long maxChunks = fileDetails.getMaxChunks();
+		long maxChunks = fileDetails.getMaxChunks();
 		
-		long maxChunks =2;
 		for(int i=1; i <= maxChunks; i++) {
+			
 			ProxyInfo proxy = readProxies.get((i-1) % proxyNum);
 			
+			//ManagedChannel channel = getChannel(proxy.getIp() + ":" + proxy.getPort());
 			ManagedChannel channel = getChannel(proxy.getIp() + ":" + proxy.getPort());
 			
-			DataTransferServiceGrpc.DataTransferServiceStub asyncStub 
-				= DataTransferServiceGrpc.newStub(channel);
+			/**	
+			 * Blocking Implementation of Download
+			 */
+			
+			DataTransferServiceGrpc.DataTransferServiceBlockingStub blockingStub 
+			= DataTransferServiceGrpc.newBlockingStub(channel);
+			
 			
 			ChunkInfo downloadRequest = ChunkInfo.newBuilder()
-//					.setFileName(fileDetails.getFileName()).setChunkId(i).setStartSeqNum(1).build();
 					.setFileName(fileName).setChunkId(i).setStartSeqNum(1).build();
+		
+			Iterator<FileMetaData> fileData;
+			
+			try {
+				fileData = blockingStub.downloadChunk(downloadRequest);
+			} catch (StatusRuntimeException ex) {
+				logger.log(Level.WARN, "RPC downloadChunk failed: {0}");
+				return;
+			}
+			
+			while(fileData.hasNext()) {
+				FileMetaData eachSeq = fileData.next();
+				byte [] data = eachSeq.getData().toByteArray();
+				out.write(data);
+			}
+
+			
+		/**	
+		 * Asynchronous Implementation of Download
+		 */
+		 /** DataTransferServiceGrpc.DataTransferServiceStub asyncStub 
+			= DataTransferServiceGrpc.newStub(channel);
 			asyncStub.downloadChunk(downloadRequest, new StreamObserver<FileMetaData>() {
 
 				@Override
@@ -316,8 +350,12 @@ public class Client {
 					channel.shutdown();
 				}
 				
-			});
+			}); **/
 		}
+		out.flush();
+		out.close();
+
+		System.out.println("Done!!");
 
 	}
 
@@ -326,7 +364,7 @@ public class Client {
 		System.out.println("requestFileInfo called with " + fileName);
 
 		//TODO Update RAFT Node address
-		ManagedChannel channel = getChannel(getRandomAddress(ConfigUtil.raftNodes));
+		ManagedChannel channel = getChannel("10.0.20.3:10000");
 		DataTransferServiceGrpc.DataTransferServiceBlockingStub blockingStub = DataTransferServiceGrpc.newBlockingStub(channel);
 		FileInfo request = FileInfo.newBuilder().setFileName(fileName).build();
 		FileLocationInfo fileLocations = blockingStub.requestFileInfo(request);
@@ -338,11 +376,11 @@ public class Client {
 		System.out.println("listFiles called");
 
 		//TODO Update RAFT Node address
-		ManagedChannel channel = getChannel(getRandomAddress(ConfigUtil.raftNodes));
-
+		//ManagedChannel channel = getChannel(getRandomAddress(ConfigUtil.raftNodes));
+		ManagedChannel channel = getChannel("10.0.20.3:10000");
 		DataTransferServiceGrpc.DataTransferServiceBlockingStub blockingStub = DataTransferServiceGrpc.newBlockingStub(channel);
 
-		RequestFileList request = RequestFileList.newBuilder().setIsClient(true).build();
+		RequestFileList request = RequestFileList.newBuilder().setIsClient(false).build();
 		FileList li = blockingStub.listFiles(request);
 
 		System.out.println("File List: \n" + li);

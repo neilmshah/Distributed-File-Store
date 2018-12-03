@@ -79,7 +79,9 @@ public class DBTransferServiceImpl extends DataTransferServiceGrpc.DataTransferS
 	@Override
 	public void downloadChunk(grpc.FileTransfer.ChunkInfo request, io.grpc.stub.StreamObserver<grpc.FileTransfer.FileMetaData> responseObserver) {
 		
+		
 		for (Entry<String, FileData> entry : db.entrySet()) {
+			logger.debug("DB Key => " +entry.getKey() +  "  DB Value  => " + entry.getValue());
 	        if (entry.getKey().startsWith(request.getFileName()+KEY_DELIMINATOR+request.getChunkId())) {
 	        	  
 	        	 responseObserver.onNext(

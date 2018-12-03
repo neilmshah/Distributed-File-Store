@@ -36,20 +36,20 @@ public class TeamClusterServiceImpl extends TeamClusterServiceGrpc.TeamClusterSe
 	public TeamClusterServiceImpl(){
 		super();
 	}
-	
+
 	public TeamClusterServiceImpl(RaftServer serv){
 		super();
 		server = serv;
 	}
-	
-	
+
+
 	@Override
 	public void heartbeat(Team.Ack request, StreamObserver<Team.Ack> responseObserver) {
-		
+
 		Team.Ack  response = Team.Ack.newBuilder().setIsAck(true).setMessageId(request.getMessageId()).build();
 		responseObserver.onNext(response);
-	    responseObserver.onCompleted();
-		
+		responseObserver.onCompleted();
+
 	}
 
 	/**
@@ -77,7 +77,7 @@ public class TeamClusterServiceImpl extends TeamClusterServiceGrpc.TeamClusterSe
 		String key = request.getFileName()+KEY_DELIMINATOR+ request.getChunkId()+KEY_DELIMINATOR+request.getMessageId();
 		String value = server.data.get(key);
 		logger.debug("Value presently stored in hashmap for key "+key+": "+value);
-		
+
 		//MaxChunks$IP1,IP2,IP3
 		// If file is getting uploaded for the first time.
 		if(value == null) {
@@ -105,7 +105,7 @@ public class TeamClusterServiceImpl extends TeamClusterServiceGrpc.TeamClusterSe
 			String newValue = valArr[0] + "$"+ valArr[1];
 			value = newValue;
 			//server.data.put(key, newValue);
-			
+
 		}
 
 		boolean acceptChange = false;
@@ -215,24 +215,37 @@ public class TeamClusterServiceImpl extends TeamClusterServiceGrpc.TeamClusterSe
 			channel.shutdownNow();
 		}
 	}
-	
+
 	/**
 	 * Proxy to fetch file locations of a particular file and chunk from RAFT HashMap
 	 * 
 	 * rpc GetChunkLocations (FileData) returns (ChunkLocations)
 	 * 
 	 */
-	
+
 	@Override
 	public void getChunkLocations(grpc.Team.FileData request,
-		        io.grpc.stub.StreamObserver<grpc.Team.ChunkLocations> responseObserver) {
+			io.grpc.stub.StreamObserver<grpc.Team.ChunkLocations> responseObserver) {
+
+		//Forward command to leader and return that
+		if(server.raftState != 2) {
+			System.out.println("getChunkLocations called by non-leader! Forwarding to "+server.currentLeaderIndex);
+			Connection con = ConfigUtil.raftNodes.get((int) server.currentLeaderIndex);
+			ManagedChannel channel = ManagedChannelBuilder
+					.forTarget(con.getIP() + ":" + con.getPort()).usePlaintext(true).build();
+			TeamClusterServiceGrpc.TeamClusterServiceBlockingStub stub = TeamClusterServiceGrpc.newBlockingStub(channel);
+
+			responseObserver.onNext(stub.getChunkLocations(request));
+			responseObserver.onCompleted();
+			return;
+		}
 		String key = request.getFileName()+KEY_DELIMINATOR+ request.getChunkId()+KEY_DELIMINATOR+request.getMessageId();
 		String value = server.data.get(key);
 
 		logger.debug("Getting chunk data: key="+key+"\nvalue="+value);
 		String[] valArr = value.split("\\$");
 		ArrayList<String> arrayList = new ArrayList<String>(Arrays.asList(valArr[1]));
-		
+
 		ChunkLocations ch = ChunkLocations.newBuilder().setChunkId(request.getChunkId())
 				.setFileName(request.getFileName())
 				.addAllDbAddresses(arrayList)

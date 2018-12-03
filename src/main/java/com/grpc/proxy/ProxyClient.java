@@ -104,7 +104,7 @@ public class ProxyClient {
 				} catch (StatusRuntimeException ex) {
 				  logger.log(Level.WARN, "RPC failed: {0} from "+ li);
 				}
-			channel.shutdown();
+			//channel.shutdown();
 			if(fileMetaDataList != null) {
 				break;
 			}
