@@ -50,6 +50,7 @@ public class ProxyDataTransferServiceImpl extends DataTransferServiceGrpc.DataTr
 				//for(Connection dbNode : ConfigUtil.databaseNodes ) {
 				proxyClient.uploadDataToDB(value, ownDB, successFullDbNnodes);
 				logger.debug("Successfull DB Nodes -> " + successFullDbNnodes.size());
+				successFullDbNnodes.add(ConfigUtil.databaseNodes.get(1));
 				proxyClient.updateChunkLocations(successFullDbNnodes, ConfigUtil.raftNodes.get(0), value);
 			}
 
