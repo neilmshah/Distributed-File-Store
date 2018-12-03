@@ -213,6 +213,7 @@ public class RaftServiceImpl extends RaftServiceGrpc.RaftServiceImplBase{
 		System.out.println("Key="+request.getEntry().getKey()+"Value="+request.getEntry().getValue());
 		server.data.put(request.getEntry().getKey(), request.getEntry().getValue());
 		server.numEntries++;
+		System.out.println("Number of entries: "+server.numEntries);
 
 		boolean accept = true;
 		Raft.Response response = Raft.Response.newBuilder().setAccept(accept).build();

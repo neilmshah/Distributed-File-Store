@@ -106,14 +106,13 @@ public class TeamClusterServiceImpl extends TeamClusterServiceGrpc.TeamClusterSe
 			
 		}
 
-		//TODO how to tell server to share a value with the others
-		//server.changes.add(key+"\\"+value);
 		boolean acceptChange = false;
 		if(pollValueChange(key, value)){
 			confirmValueChange(key, value);
 			acceptChange = true;
 			server.data.put(key, value);
 			server.numEntries++;
+			System.out.println("Leader pushed value change! Entries="+server.numEntries);
 		}
 
 		Team.Ack response = Team.Ack.newBuilder()
@@ -170,6 +169,8 @@ public class TeamClusterServiceImpl extends TeamClusterServiceGrpc.TeamClusterSe
 				logger.debug("Rejected vote from "+i);
 			}
 
+			channel.shutdownNow();
+
 			//Check if no point continuing to vote
 			if(accepts > ConfigUtil.raftNodes.size()/2)
 				return true;
@@ -203,6 +204,8 @@ public class TeamClusterServiceImpl extends TeamClusterServiceGrpc.TeamClusterSe
 					.build();
 
 			Raft.Response vote = stub.acceptEntry(voteReq);
+
+			channel.shutdownNow();
 		}
 	}
 	
