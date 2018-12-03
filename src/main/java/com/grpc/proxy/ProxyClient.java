@@ -119,10 +119,12 @@ public class ProxyClient {
 	 * rpc getChunkLocations (FileData) returns (ChunkLocations)
 	 * 
 	 * TODO Update target address with RAFT Server IP
+	 * @param connection 
 	 * 
 	 */
-	public ChunkLocations GetChunkLocations(ChunkInfo ch) {
-		final ManagedChannel channel = ManagedChannelBuilder.forTarget("localhost:3000")
+	public ChunkLocations GetChunkLocations(ChunkInfo ch, Connection connection) {
+		String addressString = connection.getIP() +":"+ connection.getPort();
+		final ManagedChannel channel = ManagedChannelBuilder.forTarget(addressString)
 				.usePlaintext(true)
 				.build();
 		TeamClusterServiceGrpc.TeamClusterServiceBlockingStub blockingStub = TeamClusterServiceGrpc.newBlockingStub(channel);

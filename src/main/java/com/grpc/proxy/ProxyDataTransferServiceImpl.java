@@ -83,7 +83,7 @@ public class ProxyDataTransferServiceImpl extends DataTransferServiceGrpc.DataTr
 	public void downloadChunk(grpc.FileTransfer.ChunkInfo request,
 	        io.grpc.stub.StreamObserver<grpc.FileTransfer.FileMetaData> responseObserver) {
 		Timestamp ts1  =  new Timestamp(System.currentTimeMillis());
-		ChunkLocations ch = proxyClient.GetChunkLocations(request);
+		ChunkLocations ch = proxyClient.GetChunkLocations(request, ConfigUtil.raftNodes.get(0));
 			
 		Iterator <FileMetaData> fileMetaDataList = proxyClient.downloadChunk(request, ch.getDbAddressesList());
 
