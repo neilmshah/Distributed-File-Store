@@ -42,7 +42,7 @@ public class TestRaftConnectionClass {
 		stub = TeamClusterServiceGrpc.newBlockingStub(channel);
 		Team.FileData req2 = Team.FileData.newBuilder()
 				.setFileName("Introduction to Map Reduce.pdf")
-				.setChunkId(2)
+				.setChunkId(1)
 				.build();
 		Team.ChunkLocations res2 = stub.getChunkLocations(req2);
 		System.out.println("DB Addresses: ");

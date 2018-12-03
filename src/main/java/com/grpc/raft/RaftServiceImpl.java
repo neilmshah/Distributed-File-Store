@@ -40,7 +40,7 @@ public class RaftServiceImpl extends RaftServiceGrpc.RaftServiceImplBase{
 		}
 
 		//If this term < sent term
-		else if(server.term < request.getTerm()){
+		else if(server.term <= request.getTerm()){
 			//Set this term as request's term, step down, reset election timer
 			server.hasVoted = false;
 			server.term = request.getTerm();
