@@ -15,7 +15,7 @@ This Repository contains code to set up a distributed file sharing system amongs
 ### Architecture Diagram
 
 * [Link to Architecture Diagram](https://github.com/manogna-mujje/file-transfer-app/blob/master/arc.png)
-<img src="https://github.com/manogna-mujje/file-transfer-app/blob/master/arc.png" width="500" height="700" />
+<img src="https://github.com/manogna-mujje/file-transfer-app/blob/master/arc.png" />
 
 ## Start up steps.
 
