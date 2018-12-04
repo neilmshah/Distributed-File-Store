@@ -228,7 +228,7 @@ public class TeamClusterServiceImpl extends TeamClusterServiceGrpc.TeamClusterSe
 			io.grpc.stub.StreamObserver<grpc.Team.ChunkLocations> responseObserver) {
 
 		//Forward command to leader and return that
-		/*
+		
 		if(server.raftState != 2) {
 			System.out.println("getChunkLocations called by non-leader! Forwarding to "+server.currentLeaderIndex);
 			Connection con = ConfigUtil.raftNodes.get((int) server.currentLeaderIndex);
@@ -240,7 +240,7 @@ public class TeamClusterServiceImpl extends TeamClusterServiceGrpc.TeamClusterSe
 			responseObserver.onCompleted();
 			return;
 		}
-		*/
+		
 		String key = request.getFileName()+KEY_DELIMINATOR+ request.getChunkId()+KEY_DELIMINATOR+request.getMessageId();
 		String value = server.data.get(key);
 

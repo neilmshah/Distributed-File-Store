@@ -558,7 +558,7 @@ public class Client {
 		ManagedChannel channel = getChannel(getRandomAddress(ConfigUtil.raftNodes));
 		DataTransferServiceGrpc.DataTransferServiceBlockingStub blockingStub = DataTransferServiceGrpc.newBlockingStub(channel);
 
-		RequestFileList request = RequestFileList.newBuilder().setIsClient(false).build();
+		RequestFileList request = RequestFileList.newBuilder().setIsClient(true).build();
 		FileList li = blockingStub.listFiles(request);
 
 		System.out.println("File List: \n" + li);
