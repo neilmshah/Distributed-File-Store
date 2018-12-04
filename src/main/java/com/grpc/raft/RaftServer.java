@@ -258,6 +258,7 @@ public class RaftServer {
 						Raft.EntryFix entries = Raft.EntryFix.newBuilder()
 								.addAllMap(entryList)
 								.build();
+						stubs.get(stubIndex).fixEntries(entries);
 					}
 					else if(!response.getRequireUpdate()){
 						//Do nothing, either everything is fine, or this leader is being ignored

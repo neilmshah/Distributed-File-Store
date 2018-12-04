@@ -119,6 +119,7 @@ public class RaftServiceImpl extends RaftServiceGrpc.RaftServiceImplBase{
 	@Override
 	public void fixEntries(Raft.EntryFix request,
 						   StreamObserver<Raft.Response> responseObserver){
+		System.out.println("Entries being fixed!");
 		server.data.clear();
 		for(Raft.Entry entry : request.getMapList()){
 			server.data.put(entry.getKey(), entry.getValue());
