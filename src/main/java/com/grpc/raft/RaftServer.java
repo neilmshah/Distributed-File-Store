@@ -268,8 +268,8 @@ public class RaftServer {
 
 				@Override
 				public void onFailure(Throwable throwable) {
-					System.err.println("Error occured on grpc response!");
-					throwable.printStackTrace();
+					System.err.println("Unable to reach follower "+stubIndex);
+					//throwable.printStackTrace();
 				}
 			});
 		}

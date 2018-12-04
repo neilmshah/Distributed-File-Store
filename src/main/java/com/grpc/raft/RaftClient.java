@@ -54,7 +54,7 @@ public class RaftClient {
 			DataTransferServiceGrpc.DataTransferServiceBlockingStub stub = DataTransferServiceGrpc.newBlockingStub(channel);
 			FileTransfer.FileLocationInfo response  = null;
 			try {
-				response =  stub.getFileLocation(request);
+				response =  stub.withDeadlineAfter(10000, TimeUnit.MILLISECONDS).getFileLocation(request);
 			}
 			catch(Exception e) {
 				channel.shutdownNow();
