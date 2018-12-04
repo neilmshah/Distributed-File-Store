@@ -124,6 +124,7 @@ public class RaftServiceImpl extends RaftServiceGrpc.RaftServiceImplBase{
 		for(Raft.Entry entry : request.getMapList()){
 			server.data.put(entry.getKey(), entry.getValue());
 		}
+		server.numEntries = (int)request.getNumEntries();
 
 		server.numEntries = (int)request.getNumEntries();
 		Raft.Response response = Raft.Response.newBuilder()
