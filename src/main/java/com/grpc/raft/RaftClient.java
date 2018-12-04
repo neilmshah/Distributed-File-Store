@@ -94,7 +94,7 @@ public class RaftClient {
 					}
 				}
 			}catch (Exception e){
-				System.out.println("Unable to reach this global node! Skipping");
+				System.out.println("Unable to reach this global node from "+addressString+"! Skipping");
 				e.printStackTrace();
 			}
 		}
