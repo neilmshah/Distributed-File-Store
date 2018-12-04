@@ -2,10 +2,7 @@ package com.grpc.raft;
 
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
-import grpc.FileTransfer;
-import grpc.RaftServiceGrpc;
-import grpc.Team;
-import grpc.TeamClusterServiceGrpc;
+import grpc.*;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 
@@ -19,6 +16,10 @@ import java.util.Arrays;
 public class TestRaftConnectionClass {
 
 	public static void main(String [] args){
+		listFilesOtherTeams();
+	}
+
+	public static void genericTest(){
 		ManagedChannel channel = ManagedChannelBuilder
 				.forTarget("10.0.20.4:10000").usePlaintext(true).build();
 		TeamClusterServiceGrpc.TeamClusterServiceBlockingStub stub =
@@ -65,7 +66,22 @@ public class TestRaftConnectionClass {
 		*/
 	}
 
-	public void pollValue(String addr, String key){
+	public static void pollValue(String addr, String key){
+
+	}
+
+	public static void listFilesOtherTeams(){
+		ManagedChannel channel = ManagedChannelBuilder
+				.forTarget("10.0.20.2:10000").usePlaintext(true).build();
+		DataTransferServiceGrpc.DataTransferServiceBlockingStub stub =
+				DataTransferServiceGrpc.newBlockingStub(channel);
+
+		FileTransfer.RequestFileList request = FileTransfer.RequestFileList.newBuilder().setIsClient(true).build();
+		FileTransfer.FileList respose = stub.listFiles(request);
+
+		for(int i = 0; i < respose.getLstFileNamesCount(); i++){
+			System.out.println(respose.getLstFileNames(i));
+		}
 
 	}
 }

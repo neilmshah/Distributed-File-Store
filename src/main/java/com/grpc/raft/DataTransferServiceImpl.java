@@ -77,7 +77,8 @@ public class DataTransferServiceImpl extends DataTransferServiceGrpc.DataTransfe
 		if(request.getIsClient()) {
 			
 			logger.debug("ListFiles rpc going to all clusters...");
-			client.listFilesFromOtherTeams(ConfigUtil.globalNodes, fileList, request);
+			//client.listFilesFromOtherTeams(ConfigUtil.globalNodes, fileList, request);
+			client.listFilesFromOtherTeamsOptimized(ConfigUtil.globalNodes, fileList, request);
 		}
 		//send your own files.
 

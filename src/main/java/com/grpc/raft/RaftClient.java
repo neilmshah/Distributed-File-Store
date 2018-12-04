@@ -1,7 +1,13 @@
 package com.grpc.raft;
 
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.log4j.Logger;
 
 import com.util.Connection;
@@ -12,6 +18,8 @@ import grpc.FileTransfer.FileInfo;
 import grpc.FileTransfer.RequestFileList;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+
+import javax.annotation.Nullable;
 
 /**
  * This class is a client to Raft Server.
@@ -99,5 +107,46 @@ public class RaftClient {
 			}
 		}
 
+	}
+
+	public void listFilesFromOtherTeamsOptimized(List<Connection> globalNodes, List<String> fileList, RequestFileList request){
+		ConcurrentLinkedQueue<String> mylist = new ConcurrentLinkedQueue<String>();
+		AtomicInteger completedRequests = new AtomicInteger(0);
+
+		for(Connection conn : globalNodes){
+			String addressString = conn.getIP() +":" +  conn.getPort();
+			ManagedChannel channel = ManagedChannelBuilder.forTarget(addressString)
+					.usePlaintext(true)
+					.build();
+
+			DataTransferServiceGrpc.DataTransferServiceFutureStub stub = DataTransferServiceGrpc.newFutureStub(channel);
+			RequestFileList requestNew = RequestFileList.newBuilder().setIsClient(false).build();
+			ListenableFuture<FileTransfer.FileList> future =  stub.withDeadlineAfter(10000, TimeUnit.MILLISECONDS).listFiles(requestNew);
+			Futures.addCallback(future, new FutureCallback<FileTransfer.FileList>() {
+				@Override
+				public void onSuccess(@Nullable FileTransfer.FileList fileList) {
+					for(int i = 0; i < fileList.getLstFileNamesCount(); i++){
+						mylist.add(fileList.getLstFileNamesList().get(i));
+					}
+					completedRequests.incrementAndGet();
+				}
+
+				@Override
+				public void onFailure(Throwable throwable) {
+					completedRequests.incrementAndGet();
+				}
+			});
+
+		}
+
+		while(completedRequests.intValue() < globalNodes.size()){
+			//Wait until it completes
+			//Thread.sleep(50);
+			logger.debug("Waiting for responses. Received "+completedRequests.intValue()+" / "+globalNodes.size());
+		}
+
+		for(String s : mylist){
+			fileList.add(s);
+		}
 	}
 }
