@@ -83,15 +83,20 @@ public class RaftClient {
 					.usePlaintext(true)
 					.build();
 
+			System.out.println("Retrieving file list from "+addressString);
 			DataTransferServiceGrpc.DataTransferServiceBlockingStub stub = DataTransferServiceGrpc.newBlockingStub(channel);
-			RequestFileList requestNew = RequestFileList.newBuilder().setIsClient(false).build();
-			FileTransfer.FileList response =  stub.listFiles(requestNew);
-			if(response.getLstFileNamesCount() != 0) {
-				for(int i = 0;i< response.getLstFileNamesCount();i++) {
-					fileList.add(response.getLstFileNames(i));
+			try {
+				RequestFileList requestNew = RequestFileList.newBuilder().setIsClient(false).build();
+				FileTransfer.FileList response =  stub.listFiles(requestNew);
+				if(response.getLstFileNamesCount() != 0) {
+					for(int i = 0;i< response.getLstFileNamesCount();i++) {
+						fileList.add(response.getLstFileNames(i));
+					}
 				}
+			}catch (Exception e){
+				System.out.println("Unable to reach this global node! Skipping");
+				e.printStackTrace();
 			}
-
 		}
 
 	}
