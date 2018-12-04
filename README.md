@@ -14,8 +14,8 @@ This Repository contains code to set up a distributed file sharing system amongs
 
 ### Architecture Diagram
 
-* [Link to Architecture Diagram](https://github.com/nguyensjsu/fa18-281-avengers/blob/master/Architecture_Diagram_FinalVersion.png)
-<img src="https://github.com/nguyensjsu/fa18-281-avengers/blob/master/Architecture_Diagram_FinalVersion.png" width="500" height="700" />
+* [Link to Architecture Diagram](https://github.com/manogna-mujje/file-transfer-app/blob/master/arc.png)
+<img src="https://github.com/manogna-mujje/file-transfer-app/blob/master/arc.png" width="500" height="700" />
 
 ## Start up steps.
 
