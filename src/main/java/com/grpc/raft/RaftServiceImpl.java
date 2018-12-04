@@ -49,9 +49,12 @@ public class RaftServiceImpl extends RaftServiceGrpc.RaftServiceImplBase{
 			server.resetTimeoutTimer();
 			if(server.heartbeatEvent != null)
 				server.heartbeatEvent.cancel();
+			boolean reqUpdate = false;
+			if(request.getAppendedEntries() > server.numEntries)
+				reqUpdate = true;
 			Raft.Response response = Raft.Response.newBuilder()
 					.setAccept(true)
-					.setRequireUpdate(true)
+					.setRequireUpdate(reqUpdate)
 					.build();
 			responseObserver.onNext(response);
 			responseObserver.onCompleted();
