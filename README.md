@@ -1,4 +1,4 @@
-# file-transfer-app
+# Distributed-File-Store
 
 This Repository contains code to set up a distributed file sharing system amongst clusters. RAFT algorithm has been used as consensus algorithm. The cluster will have following capabilities :
    
